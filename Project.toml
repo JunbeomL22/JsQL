@@ -1,0 +1,7 @@
+name = "FiccPricer"
+uuid = "4796203f-7d9f-4ccb-9881-017693b4ad5b"
+authors = ["PC "]
+version = "0.1.0"
+
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"

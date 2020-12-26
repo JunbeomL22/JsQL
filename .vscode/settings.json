@@ -1,0 +1,28 @@
+{
+    "multiCommand.commands": [
+        {
+            "command": "multiCommand.down5Lines",
+            "label": "down5Lines",
+            "description": "down the cursor in 6 times",
+            "sequence": [
+                "emacs-mcx.nextLine",
+                "emacs-mcx.nextLine",
+                "emacs-mcx.nextLine",
+                "emacs-mcx.nextLine",
+                "emacs-mcx.nextLine"
+            ]
+        },
+        {
+            "command": "multiCommand.up5Lines",
+            "label": "up5Lines",
+            "description": "up the cursor in 6 times",
+            "sequence": [
+                "emacs-mcx.previousLine",
+                "emacs-mcx.previousLine",
+                "emacs-mcx.previousLine",
+                "emacs-mcx.previousLine",
+                "emacs-mcx.previousLine"
+            ]
+        }
+    ]
+}
