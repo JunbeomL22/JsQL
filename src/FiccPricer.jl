@@ -1,38 +1,69 @@
 __precompile__()
 module FiccPricer
 
-const basisPoint = 0.0001
+const bp = 0.0001
 const ε = 1.0e-10
 
 include("Time/Times.jl")
 include("Math/Math.jl")
 using FiccPricer.Math, FiccPricer.Times
 
-export
-# abstract_type.jl
+export bp, ε
+
+export # abstract_type.jl
 LazyObject, Instrument, Swap, SwapType, Bond, Results, AbstractPayoff,
-PositionType,
+PositionType, AbstractCurrency,
 #
 CompoundingType, TermStructure, YieldTermStructure, CreditTermStructure, ConvenienceTermStructure,
-VolatilityTermStructure, OptionletVolatilityTermStructure, SwaptionVolatilityTermStructure,
-CashFlows, Leg, CashFlow, Coupon, Duration,
-# lazy.jl
-LazyMixin,
-#interest_rate.jl
-ContinuousCompounding, SimpleCompounding, ModifiedDuration, discount_factor, compound_factor, 
-implied_rate,
-# Quote/Quote.jl
-Quote,
-# TermStructure/curve.jl
-Curve, InterpolatedCurve, ZeroCurve
+VolatilityTermStructure, OptionletVolatilityStructure, SwaptionVolatilityStructure,
+CashFlows, Leg, CashFlow, Coupon, Duration, IborCouponPricer,
+# term
+VoltilityType
 
-# experimental! different from original quentlib, dunno waht will happen by adding the following lines
-# basically for examples
-export 
-# Times.jl
+export # lazy.jl
+LazyMixin
+
+export #interest_rate.jl
+ContinuousCompounding, SimpleCompounding, ModifiedDuration, discount_factor, compound_factor, 
+implied_rate
+
+export # Quote/Quote.jl
+Quote
+
+export # TermStructure/curve.jl
+Curve, InterpolatedCurve, ZeroCurve, InterpolatedDiscountCurve
+
+export # Termstructures/vol_term_structure.jl
+ConstantOptionVolatility
+
+export # Times.jl
 Act360, Act365, BondThirty360, EuroBondThirty360, NoFrequency, Annaul, SemiAnnaul, day_count
 
+export #currencies.jl
+AbstractCurrency, NullCurrency, Currency
+
+export # indices.jl
+IborIndex, LiborIndex, fixing_date, maturity_date, fixing, forcast_fixing, euribor_index,
+usd_libor_index, is_valied_fixing_date, add_fixing!
+
+export # cash_flows/cash_flows.jl
+CouponMixin, accrual_start_date, accrual_end_date, ref_period_start, 
+ref_period_end, SimpleCashFlow, Leg, ZeroCouponLeg
+
+export # cash_flows/fixed_rate_coupon.jl
+FixedRateCoupon, FixedRateLeg
+export # cash_flows/floating_rate_coupon.jl
+BlackIborCouponPricer, IborCoupon, IborLeg, update_pricer!
+
+#IRRFinder, operator, 
+#amount, date, duration, yield, previous_cashflow_date,
+#accrual_days, accrual_days, next_cashflow, has_occurred, accrued_amount, 
+#next_coupon_rate, maturity_date, initialize!,
+
+# Abstract Types
 include("abstract_type.jl")
+
+include("currencies/currencies.jl")
 include("Time/DayCount.jl")
 include("InterestRate.jl")
 include("observer.jl")
@@ -40,17 +71,26 @@ include("lazy.jl")
 include("Quote/Quote.jl")
 include("TermStructures/TermStructure.jl")
 include("TermStructures/curve.jl")
-include("TermStructures/Yield/zero_curve.jl")
+include("TermStructures/yield/zero_curve.jl")
+include("TermStructures/volatility/vol_term_structure.jl")
+include("indices/indices.jl")
+
+# Cash Flows ------------------------------------
+include("cash_flows/cash_flows.jl")
+include("cash_flows/fixed_rate_coupon.jl")
+include("cash_flows/floating_rate_coupon.jl")
 
 mutable struct Settings
     evaluation_date::Date
     counter::Int
+    currency::Currency
 end
 
-settings = Settings(Date(0), 0)
+settings = Settings(Date(0), 0, KRWCurrency())
 
-function set_eval_date!(sett::Settings, d::Date)
+function set_eval_date!(sett::Settings, d::Date, cur::Currency = KRWCurrency())
     sett.evaluation_date = d
+    sett.currency = cur
 end
 
 export Settings, settings, set_eval_date!

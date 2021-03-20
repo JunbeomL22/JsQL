@@ -22,6 +22,11 @@ end
 _compound_factor(::SimpleCompounding, rate::Float64, time_frac::Float64, ::Frequency)     = 1.0 + rate*time_frac
 _compound_factor(::ContinuousCompounding, rate::Float64, time_frac::Float64, ::Frequency) = exp(rate*time_frac)
 
+function compound_factor(ir::InterestRate, date1::Date, date2::Date, ref_start::Date = Date(0), ref_end::Date = Date(0))
+    date2 < date1 && error("Date1 $date1 later than date2 $date2")
+  
+    return compound_factor(ir, year_fraction(ir.dc, date1, date2))
+  end
 """
 Basically, the inverse of a compoun factor, i.e., 
 

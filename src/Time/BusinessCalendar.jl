@@ -8,9 +8,10 @@ abstract type WesternCalendar <: BusinessCalendar end
 abstract type EasternCalendar <: BusinessCalendar end
 #
 abstract type UnitedStatesCalendar <: WesternCalendar end
-#abstract type UnitedKingdomCalendar <: WesternCalendar end
+abstract type UnitedKingdomCalendar <: WesternCalendar end
 abstract type EuroCalendar <: WesternCalendar end
 #
+
 abstract type SouthKoreaCalendar <: EasternCalendar end
 #abstract type HongKongCalendar <: EasternCalendar end
 #abstract type JapanCalendar <: EasternCalendar end
@@ -78,13 +79,16 @@ function easter_date(y::Int)
 end
 
 """
-This push the date to the direction. For example, say \n
+This push the date to the direction NOT considering businessday convention. \n
+With the Dates.Day (as the first argument) and without convention, \n
+    we use this functino only for moving the date \n
+For example, say \n
 d = Date(2020, 12, 16)\n
 calendar = NullCalendar()\n
 advance(Day(-3), calendar, d) => 2020-12-11\n
 advance(Day(3), calendar, d)  => 2020-12-21
 """
-function advance(days::Day, cal::BusinessCalendar, dt::Date, biz_conv::BusinessDayConvention = Following())
+function advance(days::Day, cal::BusinessCalendar, dt::Date)
     n = days.value
     if n > 0
       while n > 0
@@ -107,20 +111,35 @@ function advance(days::Day, cal::BusinessCalendar, dt::Date, biz_conv::BusinessD
   
     return dt
 end
-  
-function advance(time_period::Union{Week, Month, Year}, cal::BusinessCalendar, dt::Date, biz_conv::BusinessDayConvention = Following())
+
+function advance(time_period::Union{Day, Week, Month, Year}, cal::BusinessCalendar, dt::Date, biz_conv::BusinessDayConvention)
+    # move the date w.o. convention
     dt += time_period
+    # now consider the convention by the following function:
     return adjust(cal, biz_conv, dt)
 end
+adjust(::BusinessCalendar, bdc::BusinessDayConvention, d::Date) = error("undefined for $(typeof(bdc))")
 
 adjust(::BusinessCalendar, ::Unadjusted, d::Date) = d
 
-function adjust(cal::BusinessCalendar, ::Union{ModifiedFollowing, Following}, d::Date)
+function adjust(cal::BusinessCalendar, ::Following, d::Date)
     while !is_business_day(cal, d)
         d += Day(1)
     end
-
     return d
+end
+function adjust(cal::BusinessCalendar, ::ModifiedFollowing, d::Date)
+    x = d
+    while !is_business_day(cal, x)
+        x += Day(1)
+    end
+    
+    if Month(x) != Month(d)  
+        return advance(Day(-1), cal, x)
+    else
+   
+        return x
+    end
 end
 
 adjust(cal::BusinessCalendar, d::Date) = adjust(cal, Following(), d)
@@ -149,3 +168,38 @@ function adjustweekendholidayUS(dt::Date)
 end
 
 is_holiday(joint::JointCalendar, dt::Date) = is_holiday(joint.cal1, dt) || is_holiday(joint.cal2, dt)
+
+function is_holiday(::TargetCalendar, dt::Date)
+    yy = year(dt)
+    mm = month(dt)
+    dd = day(dt)
+    easter_sun = easter_date(yy)
+  
+    if (
+        # New Years Day
+        (mm == 1 && dd == 1)
+        #||
+        # Good Friday
+        #easter_sun - Day(2) == dt
+        #||
+        # Easter Monday
+        #easter_sun + Day(1) == dt
+        #||
+        # Int'l Labor Day
+        #(mm == 5 && dd == 1)
+        ||
+        # Christmas
+        (mm == 12 && dd == 25)
+        #||
+        # Day of Goodwill
+        #(mm == 12 && dd == 26)
+        )
+        return true
+    else
+        return false
+    end
+end
+
+function is_endofmonth(d::Date)
+    d = lastdayofmonth(d)
+end

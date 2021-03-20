@@ -16,8 +16,10 @@ abstract type YieldTermStructure <: TermStructure end
 abstract type CreditTermStructure <: TermStructure end
 abstract type AbstractDefaultProbabilityTermStructure <: CreditTermStructure end
 abstract type VolatilityTermStructure <: TermStructure end
-abstract type OptionletVolatilityTermStructure <: VolatilityTermStructure end
-abstract type SwaptionVolatilityTermStructure <: VolatilityTermStructure end
+abstract type OptionletVolatilityStructure <: VolatilityTermStructure end
+abstract type SwaptionVolatilityStructure <: VolatilityTermStructure end
+abstract type VolatilityType end
+
 # Curves
 abstract type Curve <: YieldTermStructure end
 abstract type InterpolatedCurve{P} <: Curve end
@@ -37,3 +39,6 @@ abstract type AbstractCurrency end
 
 # Compounding Type
 abstract type CompoundingType end
+
+# cash_flows.jl/floating_rate_coupon.jl
+abstract type IborCouponPricer end    
