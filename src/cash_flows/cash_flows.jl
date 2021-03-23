@@ -73,7 +73,10 @@ get_reset_dates(coups::Vector{C}) where {C <: Coupon} = Date[accrual_start_date(
 
 ## NPV Method ##
 function _npv_reduce(coup::Coupon, yts::YieldTermStructure, settlement_date::Date)
-    if has_occurred
+    if has_occurred has_occurred(coup, settlement_date)
+        return 0.0
+    end
+    return amount(coup) * discount(yts, date(coup))
 end
 function has_occurred(cf::CashFlow, ref_date::Date, include_settlement_cf::Bool = true)
     # will need to expand this
