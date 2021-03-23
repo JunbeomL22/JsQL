@@ -55,6 +55,14 @@ FixedRateCoupon, FixedRateLeg
 export # cash_flows/floating_rate_coupon.jl
 BlackIborCouponPricer, IborCoupon, IborLeg, update_pricer!
 
+export value, func_values
+
+function value(::FiccPricer.Math.CostFunction, x::Vector{Float64})
+    return 0.0
+end
+function func_values(::FiccPricer.Math.CostFunction, x::Vector{Float64})
+    return x
+end
 #IRRFinder, operator, 
 #amount, date, duration, yield, previous_cashflow_date,
 #accrual_days, accrual_days, next_cashflow, has_occurred, accrued_amount, 

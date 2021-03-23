@@ -42,3 +42,10 @@ abstract type CompoundingType end
 
 # cash_flows.jl/floating_rate_coupon.jl
 abstract type IborCouponPricer end    
+
+# Monte Carlo
+abstract type AbstractMonteCarloModel end
+abstract type AbstractPathPricer end
+abstract type EarlyExercisePathPricer <: AbstractPathPricer end
+abstract type LsmBasisSystemPolynomType end
+abstract type LsmBasisSystemFunction <: Function end
