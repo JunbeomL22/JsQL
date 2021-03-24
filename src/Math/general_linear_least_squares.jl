@@ -32,10 +32,7 @@ function calculate!(glls::GeneralLinearLeastSquares, x::Vector{Float64}, y::Vect
     V = svdA.V
     U = svdA.U
     w = svdA.S
-    # svdA = SVD(A)
-    # V = svdA.V
-    # U = svdA.U
-    # w = svdA.s
+    
     threshold = n * eps()
     @inbounds @simd for i in eachindex(w)
         if w[i] > threshold
