@@ -1,8 +1,3 @@
-abstract type LsmBasisSystemPolynomType end
-abstract type LsmBasisSystemFunction end
-####
-### erase aboe after debug
-###
 struct Monomial <: LsmBasisSystemPolynomType end
 struct MultiMonomial <: LsmBasisSystemPolynomType end
 
