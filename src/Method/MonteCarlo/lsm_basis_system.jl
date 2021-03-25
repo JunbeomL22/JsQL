@@ -1,14 +1,15 @@
 struct Monomial <: LsmBasisSystemPolynomType end
-struct MultiMonomial <: LsmBasisSystemPolynomType end
+#struct MultiMonomial <: LsmBasisSystemPolynomType end
 
+#=
 struct MonomialFunction <: LsmBasisSystemFunction
     order::Int
 end
-
-struct MultiMonomialFunction <: LsmBasisSystemFunction
+=#
+struct MonomialFunction <: LsmBasisSystemFunction
     order::Vector{Int}
 end
-
+#=
 function (m::MonomialFunction)(x::Float64)
     ret = 1.0
     @simd for i = 1:m.order
@@ -17,16 +18,16 @@ function (m::MonomialFunction)(x::Float64)
 
     return ret
 end
-
+=#
 """
 m::MultiMonomialFunction)(x::Vector{Float64}) \n
 If m.order == [2,0,1] and x = [w,y,z], it returns w^2*z
 """
-function (m::MultiMonomialFunction)(x::Vector{Float64})
+function (m::MonomialFunction)(x::Vector{Float64})
     ret = 1.0
     dimension = length(m.order)
     if length(x) != dimension
-        error("The dimensions are not matched in MultiMonomialFunction")
+        error("The dimensions are not matched in MonomialFunction")
     end
     @simd for i = 1:dimension
         ret *= x[i]^m.order[i]
@@ -35,17 +36,17 @@ function (m::MultiMonomialFunction)(x::Vector{Float64})
     return ret
 end
 
-get_type(::Monomial) = MonomialFunction{Int}
-get_type(::MultiMonomial) = MultiMonomialFunction{Vector{Int}}
-
+get_type(::Monomial) = MonomialFunction{Vector{Int}}
+#get_type(::MultiMonomial) = MultiMonomialFunction{Vector{Int}}
+#=
 function path_basis_system!(::Monomial, order::Int, v::Vector, dimension::Int = -1)
     @simd for i = 1:order + 1
         @inbounds v[i] = MonomialFunction(i - 1) # functor generated
     end
     return v
 end
-
-function path_basis_system!(::MultiMonomial, order::Int, v::Vector, dimension::Int = -1)
+=#
+function path_basis_system!(::Monomial, order::Int, v::Vector, dimension::Int = -1)
     dimension != - 1 || error("The dimension is not defined, 1209dcj")
     indices = cumulted_index_vector(order, dimension)
     resize!(v, length(indices))
@@ -95,7 +96,10 @@ function generate_index_vector(order::Int, dimension::Int)
     end
     return ret
 end
-
+"""
+cumulted_index_vector(order=2, dimension=2) returns \n
+[0, 0], [0, 1], [1,0], [2, 0], [1, 1], [0, 2]
+"""
 function cumulted_index_vector(order::Int, dimension::Int)
     ret  = Vector{Vector{Int}}[]
     dimension >= 1 || order >= 0 || error("dimension is not positive or order is negative, 0x0x132")

@@ -33,8 +33,8 @@ Quote
 export # TermStructure/curve.jl
 Curve, InterpolatedCurve, ZeroCurve, InterpolatedDiscountCurve
 
-export # Termstructures/vol_term_structure.jl
-ConstantOptionVolatility
+export # Termstructures/volatility
+ConstantOptionVolatility, BlackConstantVol, local_vol
 
 export # Times.jl
 Act360, Act365, BondThirty360, EuroBondThirty360, NoFrequency, Annaul, SemiAnnaul, day_count
@@ -54,6 +54,8 @@ export # cash_flows/fixed_rate_coupon.jl
 FixedRateCoupon, FixedRateLeg
 export # cash_flows/floating_rate_coupon.jl
 BlackIborCouponPricer, IborCoupon, IborLeg, update_pricer!
+
+export Monomial, MonomialFunction, path_basis_system!
 
 export value, func_values
 
@@ -81,12 +83,19 @@ include("TermStructures/TermStructure.jl")
 include("TermStructures/curve.jl")
 include("TermStructures/yield/zero_curve.jl")
 include("TermStructures/volatility/vol_term_structure.jl")
+include("TermStructures/volatility/black_vol_term_structure.jl")
 include("indices/indices.jl")
 
 # Cash Flows ------------------------------------
 include("cash_flows/cash_flows.jl")
 include("cash_flows/fixed_rate_coupon.jl")
 include("cash_flows/floating_rate_coupon.jl")
+
+# Method ----------------------
+include("Method/MonteCarlo/lsm_basis_system.jl")
+
+# Process ---------------------
+include("Process/BlackScholesProcess.jl")
 
 mutable struct Settings
     evaluation_date::Date

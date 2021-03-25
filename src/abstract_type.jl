@@ -19,6 +19,9 @@ abstract type VolatilityTermStructure <: TermStructure end
 abstract type OptionletVolatilityStructure <: VolatilityTermStructure end
 abstract type SwaptionVolatilityStructure <: VolatilityTermStructure end
 abstract type VolatilityType end
+abstract type BlackVolTermStructure <: VolatilityTermStructure end
+abstract type LocalVolTermStructure <: VolatilityTermStructure end
+
 
 # Curves
 abstract type Curve <: YieldTermStructure end
@@ -49,3 +52,10 @@ abstract type AbstractPathPricer end
 abstract type EarlyExercisePathPricer <: AbstractPathPricer end
 abstract type LsmBasisSystemPolynomType end
 abstract type LsmBasisSystemFunction <: Function end
+
+# Process
+abstract type StochasticProcess end
+abstract type StochasticProcess1D <: StochasticProcess end
+abstract type AbstractBlackScholesProcess <: StochasticProcess1D end
+abstract type BlackScholesType end
+abstract type AbstractDiscretization end

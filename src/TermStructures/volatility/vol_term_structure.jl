@@ -37,3 +37,11 @@ volatility_impl(ovs::OptionletVolatilityStructure, option_date::Date, strike::Fl
 volatility_impl(const_opt_vol::ConstantOptionVolatility, ::Float64, ::Float64) = const_opt_vol.volatility
 
 volatility_impl(::NullOptionVolatilityStructure, ::Float64, ::Float64) = 0.0
+
+mutable struct LocalConstantVol{DC <:DayCount} <:LocalVolTermStructure
+    referenceDate::Date
+    settlementDays::Int
+    volatility::Quote
+    dc::DC
+end
+LocalConstantVol(refDate::Date, volatility::Float64, dc::DayCount)=LocalConstantVol(refDate, 0, Quote(volatility), dc)
