@@ -4,7 +4,7 @@ abstract type OptimizationMethod end
 abstract type CostFunction end
 abstract type Constraint end
 
-const FINITE_DIFFERENCES_EPSILON = 1e-8
+const FINITE_DIFFERENCES_EPSILON = 5.0e-4
 
 mutable struct Projection
     actualParameters::Vector{Float64} # length(actualParameters) == length(fixedParameter) ==length(fixParams)
@@ -119,12 +119,13 @@ end
 ## Cost Function methods ##
 function get_jacobin!(cf::CostFunction, jac::Matrix{Float64}, x::Vector{Float64})
     eps_ = FINITE_DIFFERENCES_EPSILON
-    xx = zeros(length(x))
+    #xx = zeros(length(x))
+    xx = copy(x)
     @inbounds @simd for i = 1:length(x)
         xx[i] += eps_
-        fp = FiccPricer.func_values(cf, xx)
+        fp = FiccPricer.gradient(cf, xx)
         xx[i] -= 2.0 * eps_
-        fm = FiccPricer.func_values(cf, xx)
+        fm = FiccPricer.gradient(cf, xx)
         for j = 1:length(fp)
             jac[j,i] = 0.5 * (fp[j] - fm[j]) / eps_
         end

@@ -1,24 +1,9 @@
 struct Monomial <: LsmBasisSystemPolynomType end
-#struct MultiMonomial <: LsmBasisSystemPolynomType end
 
-#=
-struct MonomialFunction <: LsmBasisSystemFunction
-    order::Int
-end
-=#
 struct MonomialFunction <: LsmBasisSystemFunction
     order::Vector{Int}
 end
-#=
-function (m::MonomialFunction)(x::Float64)
-    ret = 1.0
-    @simd for i = 1:m.order
-        ret *= x
-    end
 
-    return ret
-end
-=#
 """
 m::MultiMonomialFunction)(x::Vector{Float64}) \n
 If m.order == [2,0,1] and x = [w,y,z], it returns w^2*z
@@ -36,23 +21,15 @@ function (m::MonomialFunction)(x::Vector{Float64})
     return ret
 end
 
-get_type(::Monomial) = MonomialFunction{Vector{Int}}
-#get_type(::MultiMonomial) = MultiMonomialFunction{Vector{Int}}
-#=
-function path_basis_system!(::Monomial, order::Int, v::Vector, dimension::Int = -1)
-    @simd for i = 1:order + 1
-        @inbounds v[i] = MonomialFunction(i - 1) # functor generated
-    end
-    return v
-end
-=#
-function path_basis_system!(::Monomial, order::Int, v::Vector, dimension::Int = -1)
-    dimension != - 1 || error("The dimension is not defined, 1209dcj")
+get_type(::Monomial) = MonomialFunction
+
+function path_basis_system!(::Monomial, v::Vector, order::Int, dimension::Int)
+    dimension > 0 || error("The dimension is not defined, 1209dcj")
     indices = cumulted_index_vector(order, dimension)
     resize!(v, length(indices))
     #v = Vector{MultiMonomialFunction}(undef, length(indices))
     @inbounds @simd for i in eachindex(indices)
-        v[i] = MultiMonomialFunction(indices[i])
+        v[i] = MonomialFunction(indices[i])
     end
     return v
 end

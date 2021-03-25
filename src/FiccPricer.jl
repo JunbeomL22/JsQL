@@ -55,16 +55,33 @@ FixedRateCoupon, FixedRateLeg
 export # cash_flows/floating_rate_coupon.jl
 BlackIborCouponPricer, IborCoupon, IborLeg, update_pricer!
 
-export Monomial, MonomialFunction, path_basis_system!
+export Monomial, MonomialFunction, path_basis_system!, get_type
 
-export value, func_values
+export value, gradient
 
 function value(::FiccPricer.Math.CostFunction, x::Vector{Float64})
     return 0.0
 end
-function func_values(::FiccPricer.Math.CostFunction, x::Vector{Float64})
-    return x
+"""
+It is recommended to write a custom gradient  \n
+rather than using this brute force gradient. It will be much more stable.
+"""
+function gradient(t::FiccPricer.Math.CostFunction, x::Vector{Float64}) 
+    ret = zeros(Float64, length(x))
+    fp = fm = 0.0
+    basis = zeros(Float64, length(x))
+    epsilon = FiccPricer.Math.FINITE_DIFFERENCES_EPSILON
+    for i = 1:length(ret)
+        basis[i] = epsilon
+        fp = FiccPricer.value(t, x + basis)
+        basis[i] = -epsilon
+        fm = FiccPricer.value(t, x + basis)
+        basis[i] = 0.0
+        ret[i] = (fp-fm) / (2.0epsilon)
+    end
+    return ret
 end
+
 #IRRFinder, operator, 
 #amount, date, duration, yield, previous_cashflow_date,
 #accrual_days, accrual_days, next_cashflow, has_occurred, accrued_amount, 

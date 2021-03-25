@@ -1,7 +1,7 @@
 using FiccPricer
 
 # To use the optimization,
-# Define a mutable struct subtyping costFunction and define value and func_values
+# Define a mutable struct subtyping costFunction and define value and gradient
 # Define a mutable struct subtyping Constraint and define its test function 
 
 mutable struct Problem{F <: CostFunction, C <:Constraint, T}
@@ -40,7 +40,7 @@ end
 
 function values!(p::Problem, x::Vector{Float64})
     p.functionEvaluation += 1
-    return FiccPricer.func_values(p.costFunction, x) #e.g., (1-x)^2 + (1-y)^2  
+    return FiccPricer.gradient(p.costFunction, x) #e.g., (1-x)^2 + (1-y)^2  
 end
 
 function extrapolate!(p::Problem, i_highest::Int, factor::Float64, values::Vector{T}, 

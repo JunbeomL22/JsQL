@@ -17,10 +17,13 @@ svd
 export lmdif!, Projection, CostFunction, Constraint, NoConstraint, 
 PositiveConstraint, BoundaryConstraint, OptimizationMethod, Problem,
 ProjectedConstraint, OptimizationMethod, LevenbergMarquardt, SimplexProblem, EndCriteria,
-project, minimize!, include_params
+project, minimize!, include_params, FINITE_DIFFERENCES_EPSILON
 
 # Constants
 const EPS_VAL = eps()
+
+export GeneralLinearLeastSquares
+
 
 include("optimization/lmdif.jl")
 include("optimization/optimization.jl")
@@ -31,5 +34,6 @@ include("Interpolation/interpolation.jl")
 include("Interpolation/linear_interpolation.jl")
 include("grid.jl")
 include("svd.jl")
+include("general_linear_least_squares.jl")
 
 end

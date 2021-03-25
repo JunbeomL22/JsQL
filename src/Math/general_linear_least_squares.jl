@@ -1,3 +1,5 @@
+using LinearAlgebra
+
 mutable struct GeneralLinearLeastSquares
     a::Vector{Float64}
     err::Vector{Float64}
