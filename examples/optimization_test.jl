@@ -21,23 +21,25 @@ function FiccPricer.value(lt::LinearTest, x::Vector{Float64})
     y = lt.observations
     _value = 0.0
     for i = 1:length(y)
-        _value += (x[1]var[i]+x[2] - y[i])^2
+        _value += (x[1] + x[2]var[i] - y[i])^2
     end
     return _value
 end
-
-lt = LinearTest([0.0, 1.0, -1.0], [0.0, 1.0, -1.0])
-p = FiccPricer.Math.Problem(lt, FiccPricer.Math.NoConstraint(), [200.0, 1.0])
+x = rand(10); y = rand(10)
+vx = map(z->[z], x)
+lt = LinearTest(x, y)
+p = FiccPricer.Math.Problem(lt, FiccPricer.Math.NoConstraint(), [0.0, 0.0])
 
 om = FiccPricer.Math.LevenbergMarquardt()
 ec = FiccPricer.Math.EndCriteria(1000, 10, 1.0e-8, 1.0e-8, 1.0e-8)
 FiccPricer.Math.minimize!(om, p, ec)
 
 println(p.functionValue)
-print(p.currentValue)
+println(p.currentValue)
 ######################
 
-FiccPricer.get_type(FiccPricer.Monomial())
-v = MonomialFunction[]
+v = Function[]
 FiccPricer.path_basis_system!(FiccPricer.Monomial(), v, 1, 1)
-lsq = FiccPricer.Math.GeneralLinearLeastSquares([[0.0], [1.0], [-1.0]], [0.0, 1.0, -1.0], v)
+lsq = FiccPricer.Math.GeneralLinearLeastSquares(vx, y, v)
+println(lsq.a)
+println(sum(lsq.residuals.^2))
