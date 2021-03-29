@@ -1,4 +1,4 @@
-using FiccPricer
+using JsQL
 
 # To use the optimization,
 # Define a mutable struct subtyping costFunction and define value and gradient
@@ -35,12 +35,12 @@ end
 
 function value!(p::Problem, x::Vector{T}) where {T}
     p.functionEvaluation += 1
-    return FiccPricer.value(p.costFunction, x) # e.g., [(1-x), (1-y)]. This used for jacobian
+    return JsQL.value(p.costFunction, x) # e.g., [(1-x), (1-y)]. This used for jacobian
 end
 
 function values!(p::Problem, x::Vector{Float64})
     p.functionEvaluation += 1
-    return FiccPricer.gradient(p.costFunction, x) #e.g., (1-x)^2 + (1-y)^2  
+    return JsQL.gradient(p.costFunction, x) #e.g., (1-x)^2 + (1-y)^2  
 end
 
 function extrapolate!(p::Problem, i_highest::Int, factor::Float64, values::Vector{T}, 

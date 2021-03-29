@@ -1,4 +1,4 @@
-using FiccPricer
+using JsQL
 
 abstract type OptimizationMethod end
 abstract type CostFunction end
@@ -135,9 +135,9 @@ function get_jacobin!(cf::CostFunction, jac::Matrix{Float64}, x::Vector{Float64}
     xx = copy(x)
     @inbounds @simd for i = 1:length(x)
         xx[i] += eps_
-        fp = FiccPricer.gradient(cf, xx)
+        fp = JsQL.gradient(cf, xx)
         xx[i] -= 2.0 * eps_
-        fm = FiccPricer.gradient(cf, xx)
+        fm = JsQL.gradient(cf, xx)
         for j = 1:length(fp)
             jac[j,i] = 0.5 * (fp[j] - fm[j]) / eps_
         end

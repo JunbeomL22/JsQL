@@ -1,4 +1,4 @@
-using FiccPricer.Times, FiccPricer.Math
+using JsQL.Times, JsQL.Math
 #=
  The coupon pricers are designed to consider convexity adjustment.
  If you don't want it, just put NullOptionVolatilityStructure in the volatility attrribute.

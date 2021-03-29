@@ -1,4 +1,4 @@
-using FiccPricer
+using JsQL
 using Dates
 using Plots
 
@@ -23,25 +23,25 @@ svi_cost2 = SviCost(strikes, vol2, t2, scale=0.01, isStrikeLog = false)
 # --- define constraints  --- #
 butterfly_only = RawSviButterFlyConstraint()
 base_constraint = RawSviBaseConstraint()
-butterfly = FiccPricer.Math.JointConstraint(butterfly_only, base_constraint)
+butterfly = JsQL.Math.JointConstraint(butterfly_only, base_constraint)
 calender = CalendarConstraint(log.(strikes), (0.01 * vol1).^2.0 * t1)
-joint_arbitrage_free = FiccPricer.Math.JointConstraint(butterfly, calender)
+joint_arbitrage_free = JsQL.Math.JointConstraint(butterfly, calender)
 
 # --- define initial values --- #
 initial_value = RawSviIntialValue().init
 a_init = min(total_variance1...)
 initial_value = [0.1, 0.1, -0.01, 0.0, 0.1]
 # --- define problem and optimization method--- #
-p1 = FiccPricer.Math.Problem(svi_cost1, butterfly, copy(initial_value))
-p1_noconstraint = FiccPricer.Math.Problem(svi_cost1, FiccPricer.Math.NoConstraint(), copy(initial_value))
+p1 = JsQL.Math.Problem(svi_cost1, butterfly, copy(initial_value))
+p1_noconstraint = JsQL.Math.Problem(svi_cost1, JsQL.Math.NoConstraint(), copy(initial_value))
 
-#om = FiccPricer.Math.LevenbergMarquardt()#(1.0e-5, 1.0e-5, 1.0e-5, true)
-om = FiccPricer.Math.Simplex(0.01)
-ec = FiccPricer.Math.EndCriteria(1000, 10, 1.0e-8, 1.0e-8, 1.0e-8)
+#om = JsQL.Math.LevenbergMarquardt()#(1.0e-5, 1.0e-5, 1.0e-5, true)
+om = JsQL.Math.Simplex(0.01)
+ec = JsQL.Math.EndCriteria(1000, 10, 1.0e-8, 1.0e-8, 1.0e-8)
 
 # --- minimize ---#
-FiccPricer.Math.minimize!(om, p1, ec)
-FiccPricer.Math.minimize!(om, p1_noconstraint, ec)
+JsQL.Math.minimize!(om, p1, ec)
+JsQL.Math.minimize!(om, p1_noconstraint, ec)
 
 # --- results --- #
 svi1 = RawSvi(p1.currentValue)
@@ -59,4 +59,4 @@ p = plot(strikes, fitted_vol1, label = "fitted volatilities", seriestype = :line
 plot!(p, strikes, fitted_vol1_noconstraint, label = "no constraint", seriestype = :line)
 plot!(p, strikes, 0.01*vol1, label = "volatility data", seriestype = :scatter)
 
-FiccPricer.Math.test(butterfly, p1.currentValue)
+JsQL.Math.test(butterfly, p1.currentValue)

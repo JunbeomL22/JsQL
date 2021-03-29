@@ -1,4 +1,4 @@
-using FiccPricer.Times, FiccPricer.Math
+using JsQL.Times, JsQL.Math
 """
 Coupon (<: CashFlow, both are abstract) has CouponMixin \n
 CashFlow >: Coupon >: FixedRateCoupon

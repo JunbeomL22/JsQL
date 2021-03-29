@@ -71,7 +71,7 @@ function LiborIndex(familyName::String, tenor::TenorPeriod, fixingDays::Int, cur
     # beginning of the body
     endofMonth = libor_eom(tenor.period)
     conv = libor_conv(tenor.period)
-    jc = JointCalendar(FiccPricer.Time.UKLSECalendar(), fixingCalendar)
+    jc = JointCalendar(JsQL.Time.UKLSECalendar(), fixingCalendar)
 
     return LiborIndex(familyName, tenor, fixingDays, currency, fixingCalendar, 
                     jc, dc, yts, conv, endofMonth)

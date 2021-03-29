@@ -73,7 +73,7 @@ function minimize!(lm::LevenbergMarquardt, p::Problem, endCriteria::EndCriteria)
     # res = lmfit(fcn2, xx, endCriteria.maxIterations)
   
     # current value is already set
-    p.functionValue = FiccPricer.value(p.costFunction, x)
+    p.functionValue = JsQL.value(p.costFunction, x)
   
     return p
 end

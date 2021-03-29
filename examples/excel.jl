@@ -1,9 +1,9 @@
 using XLSX
 using BenchmarkTools
 
-include("D:/Projects/Julia/FiccPricer/examples/utils.jl")
+include("D:/Projects/Julia/JsQL/examples/utils.jl")
 
-xl_file = "D:\\Projects\\Julia\\FiccPricer\\examples\\USD201217.xlsx"
+xl_file = "D:\\Projects\\Julia\\JsQL\\examples\\USD201217.xlsx"
 
 IRS = XLSX.readdata(xl_file, "USD_IRS", "C50:N50")
 

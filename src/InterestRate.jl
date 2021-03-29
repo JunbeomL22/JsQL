@@ -30,7 +30,7 @@ function compound_factor(ir::InterestRate, date1::Date, date2::Date, ref_start::
 """
 Basically, the inverse of a compoun factor, i.e., 
 
-using FiccPricer
+using JsQL
 
 compound = 1.05; dc = Act360(); comp = SimpleCompounding(); time_frac = 1.0; freq = NoFrequency()
 

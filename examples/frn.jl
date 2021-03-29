@@ -4,9 +4,9 @@ using XLSX
 using Dates
 
 
-include("D:/Projects/Julia/FiccPricer/examples/utils.jl")
+include("D:/Projects/Julia/JsQL/examples/utils.jl")
 
-xl_file = "D:\\Projects\\Julia\\FiccPricer\\examples\\USD201217.xlsx"
+xl_file = "D:\\Projects\\Julia\\JsQL\\examples\\USD201217.xlsx"
 #xf = XLSX.readxlsx(xl_file)
 #names = XLSX.sheetnames(xf)
 

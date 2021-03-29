@@ -1,12 +1,12 @@
 __precompile__()
-module FiccPricer
+module JsQL
 
 const bp = 0.0001
 const ε = 1.0e-10
 
 include("Time/Times.jl")
 include("Math/Math.jl")
-using FiccPricer.Math, FiccPricer.Times
+using JsQL.Math, JsQL.Times
 
 export bp, ε
 
@@ -60,23 +60,23 @@ export Monomial, MonomialFunction, path_basis_system!, get_type
 
 export value, gradient
 
-function value(::FiccPricer.Math.CostFunction, x::Vector{Float64})
+function value(::JsQL.Math.CostFunction, x::Vector{Float64})
     return 0.0
 end
 """
 It is recommended to write a custom gradient  \n
 rather than using this brute force gradient. It will be much more stable.
 """
-function gradient(t::FiccPricer.Math.CostFunction, x::Vector{Float64}) 
+function gradient(t::JsQL.Math.CostFunction, x::Vector{Float64}) 
     ret = zeros(Float64, length(x))
     fp = fm = 0.0
     basis = zeros(Float64, length(x))
-    epsilon = FiccPricer.Math.FINITE_DIFFERENCES_EPSILON
+    epsilon = JsQL.Math.FINITE_DIFFERENCES_EPSILON
     for i = 1:length(ret)
         basis[i] = epsilon
-        fp = FiccPricer.value(t, x + basis)
+        fp = JsQL.value(t, x + basis)
         basis[i] = -epsilon
-        fm = FiccPricer.value(t, x + basis)
+        fm = JsQL.value(t, x + basis)
         basis[i] = 0.0
         ret[i] = (fp-fm) / (2.0epsilon)
     end

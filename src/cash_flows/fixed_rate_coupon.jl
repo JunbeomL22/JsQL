@@ -1,4 +1,4 @@
-using FiccPricer.Times
+using JsQL.Times
 
 mutable struct FixedRateCoupon{DC<: DayCount, IR <: InterestRate} <: Coupon
     couponMixin::CouponMixin{DC}

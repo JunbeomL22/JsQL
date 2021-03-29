@@ -1,9 +1,9 @@
-using FiccPricer
+using JsQL
 
-mutable struct TestCost <: FiccPricer.Math.CostFunction
+mutable struct TestCost <: JsQL.Math.CostFunction
 end
 
-function FiccPricer.value(::TestCost, x::Vector{Float64}) 
+function JsQL.value(::TestCost, x::Vector{Float64}) 
     _value = 0.0
     for i = 1:length(x)
         _value += (x[i]+2.0)^2
@@ -11,12 +11,12 @@ function FiccPricer.value(::TestCost, x::Vector{Float64})
     return _value
 end
 
-mutable struct LinearTest <: FiccPricer.Math.CostFunction
+mutable struct LinearTest <: JsQL.Math.CostFunction
     variables::Vector{Float64}
     observations::Vector{Float64}
 end
 
-function FiccPricer.value(lt::LinearTest, x::Vector{Float64}) 
+function JsQL.value(lt::LinearTest, x::Vector{Float64}) 
     var = lt.variables
     y = lt.observations
     _value = 0.0
@@ -28,22 +28,22 @@ end
 x = rand(1000); y = rand(1000)
 vx = map(z->[z], x)
 lt = LinearTest(x, y)
-constraint = FiccPricer.Math.BoundaryConstraint(1.0, 1000.0)
-p = FiccPricer.Math.Problem(lt, FiccPricer.Math.NoConstraint(), [3.0, 3.0])
-pBoundary = FiccPricer.Math.Problem(lt, constraint, [3.0, 3.0])
+constraint = JsQL.Math.BoundaryConstraint(1.0, 1000.0)
+p = JsQL.Math.Problem(lt, JsQL.Math.NoConstraint(), [3.0, 3.0])
+pBoundary = JsQL.Math.Problem(lt, constraint, [3.0, 3.0])
 
-om = FiccPricer.Math.LevenbergMarquardt()
-#om = FiccPricer.Math.Simplex(10.0)
-ec = FiccPricer.Math.EndCriteria(1000, 10, 1.0e-8, 1.0e-8, 1.0e-8)
-FiccPricer.Math.minimize!(om, p, ec)
-FiccPricer.Math.minimize!(om, pBoundary, ec)
+om = JsQL.Math.LevenbergMarquardt()
+#om = JsQL.Math.Simplex(10.0)
+ec = JsQL.Math.EndCriteria(1000, 10, 1.0e-8, 1.0e-8, 1.0e-8)
+JsQL.Math.minimize!(om, p, ec)
+JsQL.Math.minimize!(om, pBoundary, ec)
 
-#FiccPricer.Math.test(FiccPricer.Math.BoundaryConstraint(1.0, 5.0), pBoundary.currentValue)
+#JsQL.Math.test(JsQL.Math.BoundaryConstraint(1.0, 5.0), pBoundary.currentValue)
 ######################
 
 v = Function[]
-FiccPricer.path_basis_system!(FiccPricer.Monomial(), v, 1, 1)
-lsq = FiccPricer.Math.GeneralLinearLeastSquares(vx, y, v)
+JsQL.path_basis_system!(JsQL.Monomial(), v, 1, 1)
+lsq = JsQL.Math.GeneralLinearLeastSquares(vx, y, v)
 println("@ ---------- results ------------- @")
 println("solution by $(typeof(om)):  ", p.currentValue)
 println("bounded soultion by $(typeof(om)):  ", pBoundary.currentValue)
@@ -57,4 +57,4 @@ println("@ ------- number of trials ------- @")
 println("\nfunction evaluation of original: ", p.functionEvaluation)
 println("function evaluation of bounded: ", pBoundary.functionEvaluation)
 println("@ ------- constraint test -------- @")
-println("does constraint work?: ", FiccPricer.Math.test(constraint, pBoundary.currentValue))
+println("does constraint work?: ", JsQL.Math.test(constraint, pBoundary.currentValue))

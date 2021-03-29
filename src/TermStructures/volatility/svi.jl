@@ -28,9 +28,9 @@ end
 
 # ------------
 
-struct RawSviBaseConstraint <: FiccPricer.Math.Constraint end
+struct RawSviBaseConstraint <: JsQL.Math.Constraint end
 
-function FiccPricer.Math.test(::RawSviBaseConstraint, x::Vector{Float64})
+function JsQL.Math.test(::RawSviBaseConstraint, x::Vector{Float64})
     a=x[1]; b=x[2]; ρ=x[3]; m=x[4]; σ=x[5]
 
     if b < 0
@@ -47,12 +47,12 @@ function FiccPricer.Math.test(::RawSviBaseConstraint, x::Vector{Float64})
 end
 
 # ----------------
-struct RawSviButterFlyConstraint <: FiccPricer.Math.Constraint end
+struct RawSviButterFlyConstraint <: JsQL.Math.Constraint end
 
 """
 Retrived from https://hal.archives-ouvertes.fr/hal-02517572/document
 """
-function FiccPricer.Math.test(::RawSviButterFlyConstraint, x::Vector{Float64})
+function JsQL.Math.test(::RawSviButterFlyConstraint, x::Vector{Float64})
     a=x[1]; b=x[2]; ρ=x[3]
     m=x[4]; σ=x[5]
     
@@ -84,19 +84,19 @@ function FiccPricer.Math.test(::RawSviButterFlyConstraint, x::Vector{Float64})
     return true
 end
 
-struct CalendarConstraint <: FiccPricer.Math.Constraint 
+struct CalendarConstraint <: JsQL.Math.Constraint 
     prevLogStrikes::Vector{Float64}
     prevTotalVariance::Vector{Float64}
 end
 
-function FiccPricer.Math.test(cal::CalendarConstraint, x::Vector{Float64})
+function JsQL.Math.test(cal::CalendarConstraint, x::Vector{Float64})
     length(x) == 5 || error("svi parameter lenght is wrong")
     svi = RawSvi(x)
     currentTotalVariance = svi.(cal.prevLogStrikes)
     return all(cal.prevTotalVariance .< currentTotalVariance)
 end
 
-struct SviCost <: FiccPricer.Math.CostFunction
+struct SviCost <: JsQL.Math.CostFunction
     logStrikes::Vector{Float64}
     totalVariances::Vector{Float64}
 end

@@ -25,7 +25,7 @@ function ZeroCurve(times::Vector{Float64}, discounts::Vector{Float64},
     dc::DC, interpolator::P) where {DC <: DayCount, P <: Interpolation}
 
     zc = ZeroCurve{DC, P, NullCalendar}
-    d = FiccPricer.Times.advance(Day(-1),  SouthKoreaKrxCalendar(), today())
+    d = JsQL.Times.advance(Day(-1),  SouthKoreaKrxCalendar(), today())
     (0, d, dc, interpolator, NullCalendar(), Vector{Date}(undef, length(times)), times, discounts)
     initialize!(zc)
 
