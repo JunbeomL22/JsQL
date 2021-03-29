@@ -34,7 +34,8 @@ export # TermStructure/curve.jl
 Curve, InterpolatedCurve, ZeroCurve, InterpolatedDiscountCurve
 
 export # Termstructures/volatility
-ConstantOptionVolatility, BlackConstantVol, local_vol
+ConstantOptionVolatility, BlackConstantVol, local_vol, RawSvi, RawSviBaseConstraint, 
+RawSviButterFlyConstraint, CalendarConstraint, SviCost, RawSviIntialValue
 
 export # Times.jl
 Act360, Act365, BondThirty360, EuroBondThirty360, NoFrequency, Annaul, SemiAnnaul, day_count
@@ -100,6 +101,7 @@ include("TermStructures/TermStructure.jl")
 include("TermStructures/curve.jl")
 include("TermStructures/yield/zero_curve.jl")
 include("TermStructures/volatility/vol_term_structure.jl")
+include("TermStructures/volatility/svi.jl")
 include("TermStructures/volatility/black_vol_term_structure.jl")
 include("indices/indices.jl")
 

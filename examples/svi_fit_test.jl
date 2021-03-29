@@ -25,12 +25,13 @@ calender = CalendarConstraint(log.(strikes), (0.01 * vol1).^2.0 * t1)
 joint_arbitrage_free = FiccPricer.Math.JointConstraint(butterfly, calender)
 # --- define initial values --- #
 initial_value = RawSviIntialValue().init
-initial_value = [min(total_variance1...), 0.1, 0.0, 0.1, 0.1]
+initial_value = [min(total_variance1...), 0.01, 0.0, 0.0, 0.1]
 # --- define problem and optimization method--- #
 p1 = FiccPricer.Math.Problem(svi_cost1, butterfly, initial_value)
 p1_noconstraint = FiccPricer.Math.Problem(svi_cost1, FiccPricer.Math.NoConstraint(), initial_value)
-om = FiccPricer.Math.LevenbergMarquardt()
-ec = FiccPricer.Math.EndCriteria(1000, 10, 1.0e-8, 1.0e-8, 1.0e-8)
+#om = FiccPricer.Math.LevenbergMarquardt(1.0e-5, 1.0e-5, 1.0e-5, true)
+om = FiccPricer.Math.Simplex(0.0001)
+ec = FiccPricer.Math.EndCriteria(100000, 1000, 1.0e-8, 1.0e-8, 1.0e-8)
 # --- minimize ---#
 FiccPricer.Math.minimize!(om, p1, ec)
 FiccPricer.Math.minimize!(om, p1_noconstraint, ec)
@@ -46,6 +47,7 @@ fitted_vol1_noconstraint = sqrt.( svi1_noconstraint.(log_strikes) / t1 )
 #println("diff:  ", sum((svi1.(log_strikes) - total_variance1).^2.0))
 # --- plot --- #
 
+#p = plot(strikes, fitted_vol1, label = "fitted volatilities", seriestype = :line)
 p = plot(strikes, fitted_vol1, label = "fitted volatilities", seriestype = :line)
 plot!(p, strikes, fitted_vol1_noconstraint, label = "no constraint", seriestype = :line)
 plot!(p, strikes, 0.01*vol1, label = "volatility data", seriestype = :scatter)

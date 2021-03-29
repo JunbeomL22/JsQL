@@ -62,6 +62,11 @@ struct BoundaryConstraint <: Constraint
     high::Float64
 end
 
+struct JointConstraint{C1 <: Constraint, C2 <: Constraint} <: Constraint 
+    c1::C1
+    c2::C2
+end
+
 struct ProjectedConstraint{C <: Constraint} <: Constraint
     constraint::C
     projection::Projection
@@ -79,12 +84,19 @@ test(::NoConstraint, ::Vector{T}) where {T} = true
 
 test(::ProjectedConstraint, x::Vector{T}) where {T}= test(c.constraint, include_params(c.projection, x))
 
+function test(jointConstraint::JointConstraint, x::Vector{T}) where {T}
+    test1 = test(jointConstraint.c1, x)
+    test2 = test(jointConstraint.c2, x)
+    return test1 && test2
+end
+
 function test(::PositiveConstraint, x::Vector{Float64})
     @inbounds @simd for i = 1:length(x)
         if x[i] <= 0.0
             return false
         end
     end
+    return true
 end
 
 function test(c::BoundaryConstraint, x::Vector{Float64})
@@ -102,7 +114,7 @@ function update(constraint::Constraint, params::Vector{T}, direction::Vector{Flo
     valid = test(constraint, new_params)
     icount = 0
     while !valid
-        if (icount > 200)
+        if (icount > 10000)
             error("Can't update parameter vector")
         end
   
