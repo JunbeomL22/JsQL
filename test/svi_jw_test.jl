@@ -28,12 +28,9 @@ butterfly_only = RawSviButterFlyConstraint()
 base_constraint = RawSviBaseConstraint()
 butterfly = JsQL.Math.JointConstraint(butterfly_only, base_constraint)
 
-
-
 proj_butterfly_only = ProjectedSviJwButterFlyConstraint()
 proj_base_constraint = ProjectedSviJwBaseConstraint()
 proj_butterfly = JsQL.Math.JointConstraint(proj_butterfly_only, proj_base_constraint)
-
 
 #om = JsQL.Math.LevenbergMarquardt()#(1.0e-5, 1.0e-5, 1.0e-5, true)
 om = JsQL.Math.Simplex(0.01)
@@ -43,20 +40,28 @@ ec = JsQL.Math.EndCriteria(1000, 10, 1.0e-8, 1.0e-8, 1.0e-8)
 #initial_value = RawSviIntialValue().init
 #a_init = min(total_variance1...)
 initial_value = [0.1, 0.1, -0.01, 0.0, 0.1]
-proj_initial_value = [0.1, 0.0, 0.1]
+proj_initial_value = [0.1, 0.1, 0.1]
+JsQL.Math.test(proj_butterfly, proj_initial_value)
 # --- define problem and optimization method--- #
 p1 = JsQL.Math.Problem(svi_cost1, butterfly, copy(initial_value))
 p1_noconstraint = JsQL.Math.Problem(svi_cost1, JsQL.Math.NoConstraint(), copy(initial_value))
 
-proj_p1 = JsQL.Math.Problem(proj_svi_cost1, proj_butterfly, copy(initial_value))
-proj_p1_noconstraint = JsQL.Math.Problem(proj_svi_cost1, JsQL.Math.NoConstraint(), copy(initial_value))
+proj_p1 = JsQL.Math.Problem(proj_svi_cost1, proj_butterfly, copy(proj_initial_value))
+proj_p1_noconstraint = JsQL.Math.Problem(proj_svi_cost1, JsQL.Math.NoConstraint(), copy(proj_initial_value))
 
 # --- minimize ---#
 JsQL.Math.minimize!(om, p1, ec)
 JsQL.Math.minimize!(om, p1_noconstraint, ec)
 JsQL.Math.minimize!(om, proj_p1, ec)
 JsQL.Math.minimize!(om, proj_p1_noconstraint, ec)
+
+svi1 = RawSvi(p1.currentValue)
+svi1_noconstraint = RawSvi(p1_noconstraint.currentValue)
+proj_svi1 = ProjectedSviJw(proj_p1.currentValue)
+proj_svi1_noconstraint = ProjectedSviJw(proj_p1_noconstraint.currentValue)
 #### p2
+calender_only = JsQL.Math.CalendarConstraint(log_strikes, svi1.(log_strikes))
+proj_calender_only = JsQL.Math.CalendarConstraint(log_strikes, proj_svi1.(log_strikes))
 arbitrage_free = JsQL.Math.JointConstraint(butterfly, calender_only)
 proj_arbitrage_free = JsQL.Math.JointConstraint(proj_butterfly, proj_calender_only)
 p2 = JsQL.Math.Problem(svi_cost2, arbitrage_free, copy(initial_value))
@@ -71,18 +76,18 @@ JsQL.Math.minimize!(om, proj_p2, ec)
 JsQL.Math.minimize!(om, proj_p2_noconstraint, ec)
 ####
 # --- results --- #
-svi1 = RawSvi(p1.currentValue)
-svi1_noconstraint = RawSvi(p1_noconstraint.currentValue)
+
 svi2 = RawSvi(p2.currentValue)
 svi2_noconstraint = RawSvi(p2_noconstraint.currentValue)
 
-proj_svi1 = ProjectedSviJw(proj_p1.currentValue)
-proj_svi1_noconstraint = ProjectedSviJw(proj_p1_noconstraint.currentValue)
+
 proj_svi2 = ProjectedSviJw(proj_p2.currentValue)
 proj_svi2_noconstraint = ProjectedSviJw(proj_p2_noconstraint.currentValue)
 
 fitted_vol1 = sqrt.( svi1.(log_strikes) / t1 )
 fitted_vol1_noconstraint = sqrt.( svi1_noconstraint.(log_strikes) / t1 )
+proj_fitted_vol1 = sqrt.( proj_svi1.(log_strikes) / t1 )
+proj_fitted_vol1_noconstraint = sqrt.( proj_svi1_noconstraint.(log_strikes) / t1 )
 fitted_vol2 = sqrt.( svi2.(log_strikes) / t2 )
 fitted_vol2_noconstraint = sqrt.( svi2_noconstraint.(log_strikes) / t1 )
 
@@ -99,6 +104,8 @@ proj_fitted_vol2_noconstraint = sqrt.( proj_svi2_noconstraint.(log_strikes) / t1
 #p = plot(strikes, fitted_vol1, label = "fitted volatilities", seriestype = :line)
 p = plot(strikes, fitted_vol1, label = "fitted volatilities", seriestype = :line)
 plot!(p, strikes, fitted_vol1_noconstraint, label = "no constraint", seriestype = :line)
+plot!(p, strikes, proj_fitted_vol1_noconstraint, label = "proj fitted vol", seriestype = :line)
+#plot!(p, strikes, fitted_vol1_noconstraint, label = "no constraint", seriestype = :line)
 plot!(p, strikes, 0.01*vol1, label = "volatility data", seriestype = :scatter)
 
 p = plot(strikes, fitted_vol2, label = "fitted volatilities", seriestype = :line)

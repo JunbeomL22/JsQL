@@ -39,8 +39,13 @@ function ProjectedSviJw(x::Vector{Float64})
     b=x[1]; m=x[2]; σ=x[3]
 
     ρ = -m/sqrt(m^2.0 + σ^2.0)
+    a = 0.0
+
     x = -b*σ*sqrt(1.0 - ρ^2.0)
     y = b*(1.0-ρ^2.0)*(-ρ*m + sqrt(m^2.0+σ^2.0))
+    if ρ ≈ 0.0
+        ρ -= 0.001
+    end
     a = (x + y) / (ρ^2.0)
 
     return ProjectedSviJw(a, b, ρ, m, σ)
@@ -66,7 +71,7 @@ function ProjectedSviJwCost(strikes::Vector{Float64}, volatilities::Vector{Float
     return ProjectedSviJwCost(log_strikes, total_variances)
 end
 
-function value(sviCost::SviCost, x::Vector{Float64}) # b, m, σ
+function value(sviCost::ProjectedSviJwCost, x::Vector{Float64}) # b, m, σ
     logStrikes     = sviCost.logStrikes
     totalVariances = sviCost.totalVariances
 
@@ -83,6 +88,10 @@ function JsQL.Math.test(::ProjectedSviJwBaseConstraint, x::Vector{Float64})
     if b < 0
         return false
     elseif σ <= 0.0
+        return false
+    end
+    ρ = -m/sqrt(m^2.0 + σ^2.0)
+    if abs(ρ) >= 1.0
         return false
     end
     return true
