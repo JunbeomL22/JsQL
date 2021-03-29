@@ -24,7 +24,7 @@ svi_cost2 = SviCost(strikes, vol2, t2, scale=0.01, isStrikeLog = false)
 butterfly_only = RawSviButterFlyConstraint()
 base_constraint = RawSviBaseConstraint()
 butterfly = JsQL.Math.JointConstraint(butterfly_only, base_constraint)
-calender = CalendarConstraint(log.(strikes), (0.01 * vol1).^2.0 * t1)
+
 joint_arbitrage_free = JsQL.Math.JointConstraint(butterfly, calender)
 
 # --- define initial values --- #
@@ -42,13 +42,25 @@ ec = JsQL.Math.EndCriteria(1000, 10, 1.0e-8, 1.0e-8, 1.0e-8)
 # --- minimize ---#
 JsQL.Math.minimize!(om, p1, ec)
 JsQL.Math.minimize!(om, p1_noconstraint, ec)
-
+#### p2
+calender_only = CalendarConstraint(log.(strikes), svi1.(log_strikes))
+arbitrage_free = JsQL.Math.JointConstraint(calender_only, butterfly)
+p2 = JsQL.Math.Problem(svi_cost2, arbitrage_free, copy(initial_value))
+p2_noconstraint = JsQL.Math.Problem(svi_cost2, JsQL.Math.NoConstraint(), copy(initial_value))
+JsQL.Math.minimize!(om, p2, ec)
+JsQL.Math.minimize!(om, p2_noconstraint, ec)
+####
 # --- results --- #
 svi1 = RawSvi(p1.currentValue)
 svi1_noconstraint = RawSvi(p1_noconstraint.currentValue)
+svi2 = RawSvi(p2.currentValue)
+svi2_noconstraint = RawSvi(p2_noconstraint.currentValue)
 
 fitted_vol1 = sqrt.( svi1.(log_strikes) / t1 )
 fitted_vol1_noconstraint = sqrt.( svi1_noconstraint.(log_strikes) / t1 )
+fitted_vol2 = sqrt.( svi2.(log_strikes) / t2 )
+fitted_vol2_noconstraint = sqrt.( svi2_noconstraint.(log_strikes) / t1 )
+
 
 #println("fited volatilties:  ", fitted_vol1)
 #println("diff:  ", sum((svi1.(log_strikes) - total_variance1).^2.0))
@@ -59,4 +71,11 @@ p = plot(strikes, fitted_vol1, label = "fitted volatilities", seriestype = :line
 plot!(p, strikes, fitted_vol1_noconstraint, label = "no constraint", seriestype = :line)
 plot!(p, strikes, 0.01*vol1, label = "volatility data", seriestype = :scatter)
 
+p = plot(strikes, fitted_vol2, label = "fitted volatilities", seriestype = :line)
+plot!(p, strikes, fitted_vol2_noconstraint, label = "no constraint", seriestype = :line)
+plot!(p, strikes, 0.01*vol2, label = "volatility data", seriestype = :scatter)
+
+### p2 ###
+
 JsQL.Math.test(butterfly, p1.currentValue)
+JsQL.Math.test(arbitrage_free, p2.currentValue)
