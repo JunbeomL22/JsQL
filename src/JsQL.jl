@@ -34,10 +34,15 @@ export # TermStructure/curve.jl
 Curve, InterpolatedCurve, ZeroCurve, InterpolatedDiscountCurve
 
 export # Termstructures/volatility
-ConstantOptionVolatility, BlackConstantVol, local_vol, RawSvi, RawSviBaseConstraint, 
+ConstantOptionVolatility, BlackConstantVol, local_vol
+
+export # svi
+RawSvi, RawSviBaseConstraint, 
 RawSviButterFlyConstraint, CalendarConstraint, SviCost, RawSviIntialValue, Svi,
 ProjectedSviJw, ProjCalendarConstraint, ProjectedSviJwButterFlyConstraint, 
-ProjectedSviJwCost, ProjectedSviJwBaseConstraint
+ProjectedSviJwCost, ProjectedSviJwBaseConstraint, SVI_BUMP, SsviPhi, 
+QuotientSsviBase, QuotientButterfly, SsviCalendar, SsviCost, Ssvi,
+jw_to_raw, ssvi_to_jw, raw_to_jw, ssvi_to_raw
 
 
 export # Times.jl
@@ -62,6 +67,9 @@ BlackIborCouponPricer, IborCoupon, IborLeg, update_pricer!
 export Monomial, MonomialFunction, path_basis_system!, get_type
 
 export value, gradient
+
+export # instruments
+PlainVanillaPayoff, ForwardTypePayoff, Put, Call, FaceValueClaim
 
 function value(::JsQL.Math.CostFunction, x::Vector{Float64})
     return 0.0
@@ -106,6 +114,9 @@ include("TermStructures/yield/zero_curve.jl")
 include("TermStructures/volatility/vol_term_structure.jl")
 include("TermStructures/volatility/svi.jl")
 include("TermStructures/volatility/svi_jw.jl")
+include("TermStructures/volatility/ssvi.jl")
+include("TermStructures/volatility/svi_utils.jl")
+
 include("TermStructures/volatility/black_vol_term_structure.jl")
 include("indices/indices.jl")
 
@@ -119,6 +130,10 @@ include("Method/MonteCarlo/lsm_basis_system.jl")
 
 # Process ---------------------
 include("Process/BlackScholesProcess.jl")
+
+# Instrument ---------------------
+include("instruments/claim.jl")
+include("instruments/payoff.jl")
 
 mutable struct Settings
     evaluation_date::Date

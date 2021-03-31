@@ -6,10 +6,19 @@ abstract type Instrument <: LazyObject end
 abstract type Swap <: Instrument end
 abstract type SwapType end
 abstract type Bond <: Instrument end
-abstract type Results end
-abstract type AbstractPayoff end
-abstract type PositionType end
 
+abstract type AbstractClaim end
+
+abstract type AbstractPayoff end
+abstract type StrikedTypePayoff <: AbstractPayoff end
+abstract type Option{E} <: Instrument end
+abstract type OneAssetOption{E} <: Option{E} end
+abstract type OptionType end
+
+abstract type PositionType end
+abstract type CallType end
+abstract type CDSProtectionSide end
+abstract type Results end
 # TermStructure
 abstract type TermStructure <: LazyObject end
 abstract type YieldTermStructure <: TermStructure end
@@ -59,3 +68,4 @@ abstract type StochasticProcess1D <: StochasticProcess end
 abstract type AbstractBlackScholesProcess <: StochasticProcess1D end
 abstract type BlackScholesType end
 abstract type AbstractDiscretization end
+

@@ -30,7 +30,7 @@ joint_arbitrage_free = JsQL.Math.JointConstraint(butterfly, calender)
 # --- define initial values --- #
 initial_value = RawSviIntialValue().init
 a_init = min(total_variance1...)
-initial_value = [0.1, 0.1, -0.01, 0.0, 0.1]
+initial_value = [0.02, 0.1, -0.01, 0.0, 0.1]
 # --- define problem and optimization method--- #
 p1 = JsQL.Math.Problem(svi_cost1, butterfly, copy(initial_value))
 p1_noconstraint = JsQL.Math.Problem(svi_cost1, JsQL.Math.NoConstraint(), copy(initial_value))
@@ -59,7 +59,7 @@ svi2_noconstraint = RawSvi(p2_noconstraint.currentValue)
 fitted_vol1 = sqrt.( svi1.(log_strikes) / t1 )
 fitted_vol1_noconstraint = sqrt.( svi1_noconstraint.(log_strikes) / t1 )
 fitted_vol2 = sqrt.( svi2.(log_strikes) / t2 )
-fitted_vol2_noconstraint = sqrt.( svi2_noconstraint.(log_strikes) / t1 )
+fitted_vol2_noconstraint = sqrt.( svi2_noconstraint.(log_strikes) / t2 )
 
 
 #println("fited volatilties:  ", fitted_vol1)
