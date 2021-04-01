@@ -9,7 +9,8 @@ d2  = Date(2021, 6, 18)
 t2 = (d2 - now).value / 365.0
 strikes = [0.8, 0.9, 0.95, 0.975, 1.0, 1.025, 1.05, 1.1, 1.2]
 log_strikes = log.(strikes)
-vol1 = [34.28, 25.0, 20.75, 18.47, 16.15, 14.27, 13.2, 13.36, 18.49]
+vol1 = [34.28, 25.0-4.0, 20.75, 18.47, 16.15, 14.27, 13.2, 13.36, 18.49]
+# vol1 = [34.28-10.0, 20.75, 18.47, 16.15, 14.27, 13.2, 13.36]
 vol2 = [32.55, 24.72, 21.02, 19.02, 17.02, 15.30, 14.12, 13.58, 16.53]
 
 # --- totla variance --- #
@@ -29,12 +30,15 @@ p1 = JsQL.Math.Problem(ssvi_cost1, butterfly, copy(initial_value))
 p1_noconstraint = JsQL.Math.Problem(ssvi_cost1, base_constraint, copy(initial_value))
 #om = JsQL.Math.LevenbergMarquardt(1.0e-5, 1.0e-5, 1.0e-5, true)
 om = JsQL.Math.Simplex(0.01)
-ec = JsQL.Math.EndCriteria(1000, 10, 1.0e-8, 1.0e-8, 1.0e-8)
+ec = JsQL.Math.EndCriteria(10000, 10, 1.0e-8, 1.0e-8, 1.0e-8)
 # --- minimize ---#
 JsQL.Math.minimize!(om, p1, ec)
 JsQL.Math.minimize!(om, p1_noconstraint, ec)
 # -------  results  -------- #
+params = p1.currentValue
+params += [0.2, 0.0, 0.2, 0.0]
 ssvi1 = Ssvi(p1.currentValue)
+ssvi1_changed = Ssvi(p1.currentValue)
 ssvi1_noconstraint = Ssvi(p1_noconstraint.currentValue)
 fitted_vol1 = sqrt.( ssvi1.(log_strikes) / t1 )
 fitted_vol1_noconstraint = sqrt.( ssvi1_noconstraint.(log_strikes) / t1 )

@@ -19,7 +19,7 @@ struct Ssvi{SP <: SsviPhi}
     θ::Float64
     ϕ::SP
 end
-
+params(s::Ssvi) = [s.ρ, s.θ, s.ϕ.η, s.ϕ.γ]
 Ssvi(x::Vector{Float64}) = Ssvi(x[1:2]..., QuotientPhi(x[3:4]))
 Ssvi(x::Vector{Float64}, ϕ::Phi) where {Phi <: SsviPhi} = Ssvi(x..., ϕ)
 
