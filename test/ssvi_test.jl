@@ -36,9 +36,13 @@ JsQL.Math.minimize!(om, p1, ec)
 JsQL.Math.minimize!(om, p1_noconstraint, ec)
 # -------  results  -------- #
 params = p1.currentValue
-params += [0.2, 0.0, 0.2, 0.0]
+params += [0.0, 0.000, 0.1, 0.0]
 ssvi1 = Ssvi(p1.currentValue)
-ssvi1_changed = Ssvi(p1.currentValue)
+ssvi1_changed = Ssvi(params)
+
+p = plot(strikes, sqrt.( ssvi1.(log_strikes) / t1 ), label = "fitted volatilities", seriestype = :line)
+plot!(p, strikes, sqrt.( ssvi1_changed.(log_strikes) / t1 ), label = "fitted vol massaged", seriestype = :line)
+
 ssvi1_noconstraint = Ssvi(p1_noconstraint.currentValue)
 fitted_vol1 = sqrt.( ssvi1.(log_strikes) / t1 )
 fitted_vol1_noconstraint = sqrt.( ssvi1_noconstraint.(log_strikes) / t1 )

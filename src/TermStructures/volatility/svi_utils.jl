@@ -1,4 +1,4 @@
-const SVI_BUMP = 1.0e-5
+const SVI_BUMP = 2.0e-4
 
 function ssvi_to_jw(ρ::Float64, θ::Float64, ϕ::Phi, t::Float64) where {Phi <: SsviPhi}
     v = θ/t

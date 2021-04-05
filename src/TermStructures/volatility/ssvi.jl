@@ -7,8 +7,6 @@ end
 
 function QuotientPhi(x::Vector{Float64})
     η, γ = x
-    # η > 0.0 + SVI_BUMP || error("η in ϕ is negative")
-    # SVI_BUMP <= γ <= 1.0-SVI_BUMP  || error("γ in ϕ is out of the bound")
     return QuotientPhi(η, γ)
 end
 

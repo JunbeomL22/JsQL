@@ -4,3 +4,5 @@ mutable struct Quote
 
     Quote(value::Float64, is_valid::Bool) = new(value, is_valid)
 end
+
+Quote(value::Float64) = Quote(value, true)

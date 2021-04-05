@@ -13,8 +13,18 @@ end
 
 _get_payoff(payoff::PlainVanillaPayoff, price::Float64)=max(value(payoff.optionType)*(price - payoff.strike), 0.0)
 
+struct LongForward <: PositionType end
+struct ShortForward <: PositionType end
+
+value(::ShortForward)  = -1
+value(::LongForward) = 1
+
 struct ForwardTypePayoff{P <: PositionType} <: AbstractPayoff
     position::P
     strike::Float64
 end
+
+(payoff::ForwardTypePayoff)(price::Float64) = _get_payoff(payoff, price)
+_get_payoff(payoff::ForwardTypePayoff, price::Float64)=value(payoff.optionType)*(price - payoff.strike)
+
 
