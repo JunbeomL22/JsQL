@@ -18,29 +18,28 @@ CompoundingType, TermStructure, YieldTermStructure, CreditTermStructure, Conveni
 VolatilityTermStructure, OptionletVolatilityStructure, SwaptionVolatilityStructure,
 CashFlows, Leg, CashFlow, Coupon, Duration, IborCouponPricer,
 # term
-VoltilityType, ImpliedVolatility
+VoltilityType, ImpliedVolatility,
 # Payoff and Exercise
 Exercise, StrikedTypePayoff,
 # PricingEngine
-PricingEngine,
-#Process
-AbstractBlackScholesProcess
+PricingEngine
+export #Process
+AbstractBlackScholes, EulerDiscretization, GeneralizedBalckScholesProcess, drift, diffusion, 
+state_variable, black_variance, forward_price
 export # lazy.jl
 LazyMixin
-
 export #interest_rate.jl
 ContinuousCompounding, SimpleCompounding, ModifiedDuration, discount_factor, compound_factor, 
 implied_rate
-
 export # Quote/Quote.jl
 Quote
-
 export # TermStructure/curve.jl
 Curve, InterpolatedCurve, ZeroCurve, InterpolatedDiscountCurve
-
-export # Termstructures/volatility
-ConstantOptionVolatility, BlackConstantVol, local_vol
+export # Termstructures/Volatility
+ConstantOptionVolatility, BlackConstantVol, local_vol,
 local_vol_impl, FunctionalSurface
+export # implied_Volatility.jl
+LocalVol, ImpliedVolatilitySurface, FunctionalSurface
 export # svi
 RawSvi, RawSviBaseConstraint, 
 RawSviButterFlyConstraint, CalendarConstraint, SviCost, RawSviIntialValue, Svi,
@@ -48,41 +47,32 @@ ProjectedSviJw, ProjCalendarConstraint, ProjectedSviJwButterFlyConstraint,
 ProjectedSviJwCost, ProjectedSviJwBaseConstraint, SVI_BUMP, SsviPhi, 
 QuotientSsviBase, QuotientButterfly, SsviCalendar, SsviCost, Ssvi,
 jw_to_raw, ssvi_to_jw, raw_to_jw, ssvi_to_raw
-
 export # Times.jl
 Act360, Act365, BondThirty360, EuroBondThirty360, NoFrequency, Annaul, SemiAnnaul, day_count
-
 export #currencies.jl
 AbstractCurrency, NullCurrency, Currency
-
 export # indices.jl
 IborIndex, LiborIndex, fixing_date, maturity_date, fixing, forcast_fixing, euribor_index,
 usd_libor_index, is_valied_fixing_date, add_fixing!
-
 export # cash_flows/cash_flows.jl
 CouponMixin, accrual_start_date, accrual_end_date, ref_period_start, 
 ref_period_end, SimpleCashFlow, Leg, ZeroCouponLeg
-
 export # cash_flows/fixed_rate_coupon.jl
 FixedRateCoupon, FixedRateLeg
 export # cash_flows/floating_rate_coupon.jl
 BlackIborCouponPricer, IborCoupon, IborLeg, update_pricer!
-
 export # least_square
 Monomial, MonomialFunction, path_basis_system!, get_type
-
 export # 
 value, gradient
-
 export # instruments
 PlainVanillaPayoff, ForwardTypePayoff, Put, Call, FaceValueClaim
-
 export #exercise.jl 
 EuropeanExercise, AmericanExercise, BermudanExercise
 export #pricing_engine.jl
 NullPricingEngine
 export # utils.jl
-interospect_index_ratio
+interospect_index_ratio, CentralDifference
 # ------------
 # ------------
 
@@ -137,7 +127,8 @@ include("cash_flows/floating_rate_coupon.jl")
 # Method ----------------------
 include("Method/MonteCarlo/lsm_basis_system.jl")
 # Process ---------------------
-include("Process/BlackScholesProcess.jl")
+include("Process/black_scholes_process.jl")
+include("Process/discretization.jl")
 # Exercise -----
 include("exercise.jl")
 # Instrument ---------------------

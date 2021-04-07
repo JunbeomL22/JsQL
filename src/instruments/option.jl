@@ -3,6 +3,8 @@ const AmericanOption = Option{AmericanExercise}
 const BermudanOption = Option{BermudanExercise}
 
 struct OptionResults
+    value::Float64
+
     delta::Float64 # Analytic
     gamma::Float64 # Analytic
     theta::Float64 # Analytic
@@ -16,8 +18,6 @@ struct OptionResults
     diffDownGamma::Float64
     diffRho::Float64
     diffDividendRho::Float64
-
-    value::Float64
 end
 
 OptionResults() = OptionResults(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -47,5 +47,18 @@ function reset!(res::OptionResults)
     return res
 end
 
-mutable struct VanillaOption{P <: StrikedTypePayoff, E <: Exercise, PE <: PricingEngine}
+mutable struct VanillaOption{P <: StrikedTypePayoff, E <: Exercise, PE <: PricingEngine} <: OneAssetOption{E}
+    lazyMixin::LazyMixin
+    payoff::SegmentationFault
+    exercise::E
+    pricingEngine::PE
+    results::OptionResults
+end
+
+get_pricing_engine_type(::VanillaOption{S, E, P}) where {S, E, P} = P
+
+function clone(opt::VanillaOption, pe::P = opt.pricingEngine) where {P<: PricingEngine}
+    lazyMixin, res = pe == opt.pricingEngine ? (opt.lazyMixin, opt.results) : (LazyMixin(), OptionResults())
+
+    return VanillaOption{typeof(opt.payoff), typeof(opt.exercise), P}(lazyMixin, opt.payoff, opt.exercise, pe.res)
 end

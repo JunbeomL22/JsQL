@@ -12,6 +12,9 @@ BlackConstantVol(refDate::Date, cal::BusinessCalendar, volatility::Float64, dc::
 
 black_vol_impl(bts::BlackConstantVol, ::Float64, ::Float64) = bts.volatility.value
 
+"""
+total variance with constant volatility
+"""
 function black_variance_impl(bts::BlackConstantVol, t::Float64, strike::Float64)
     vol = black_vol_impl(bts, t, strike)
     return vol * vol * t

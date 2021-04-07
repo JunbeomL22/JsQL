@@ -23,3 +23,6 @@ end
 ## Null TS ##
 struct NullTermStructure <: TermStructure end
 struct NullDefaultProbabilityTermStructure <: AbstractDefaultProbabilityTermStructure end
+
+discount(yts::NullTermStructure, ::Date) = 1.0
+discount(yts::NullTermStructure, ::Float64) = 1.0

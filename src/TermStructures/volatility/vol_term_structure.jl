@@ -49,4 +49,19 @@ end
 
 LocalConstantVol(refDate::Date, volatility::Float64, dc::DayCount)=LocalConstantVol(refDate, 0, Quote(volatility), dc)
 
+function local_vol(volTS::LocalVolTermStructure, t::Float64, underlyingLevel::Float64)
+    return local_vol_impl(volTS, t, underlyingLevel)
+end
+
 local_vol_impl(volTS::LocalConstantVol, t::Float64, x::Float64) = volTS.volatility.value
+
+mutable struct LocalVolSurface{DC <:DayCount, IV <: ImpliedVolatility} <:LocalVolTermStructure
+    referenceDate::Date
+    settlementDays::Int
+    volatility::IV 
+    dc::DC
+end
+
+LocalVolSurface(refDate::Date, volatility::IV, dc::DayCount) where {IV <: ImpliedVolatility}=LocalVolSurface(refDate, 0, volatility, dc)
+
+local_vol_impl(volTS::LocalVol, t::Float64, x::Float64) = local_vol_impl(volTS.volatility, t, x)

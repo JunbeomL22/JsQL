@@ -12,6 +12,9 @@ struct JumpTime
   ts_time::Float64
 end
 
+discount(yts::NullYieldTermStructure, ::Date) = 1.0
+discount(yts::NullYieldTermStructure, ::Float64) = 1.0
+
 discount(yts::YieldTermStructure, date::Date) = discount(yts, time_from_reference(yts, date))
 
 function discount(yts::YieldTermStructure, time_frac::Float64)
