@@ -30,9 +30,9 @@ function (c::CentralDifference)(f::Function, x::Float64)
     ret = 0.0
     Δ = c.bump
     if c.order == 1
-        ret = ( f(x + Δ) - f(x - Δ) ) / (2.0*Δ)
+        ret = ( f(x+Δ) - f(x-Δ) ) / (2.0*Δ)
     elseif c.order == 2
-        ret = ( f(x + Δ) + f(x - Δ) - 2.0 * f(x) ) / (Δ^2.0)
+        ret = ( f(x+Δ) + f(x-Δ) - 2.0*f(x) ) / (Δ^2.0)
     else 
         error("higher order must be implemented")
     end 

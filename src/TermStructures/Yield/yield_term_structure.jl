@@ -41,9 +41,9 @@ end
 
 function zero_rate(yts::YieldTermStructure, date::Date, dc::DayCount, comp::CompoundingType, freq::Frequency = Annual())
   if date == yts.referenceDate
-    return implied_rate(1.0 / discount(yts, 0.0001), dc, comp, 0.0001, freq)
+      return implied_rate(1.0 / discount(yts, 0.0001), dc, comp, 0.0001, freq)
   else
-    return implied_rate(1.0 / discount(yts, date), dc, comp, reference_date(yts), date, freq)
+      return implied_rate(1.0 / discount(yts, date), dc, comp, reference_date(yts), date, freq)
   end
 end
 
@@ -52,7 +52,7 @@ function zero_rate(yts::YieldTermStructure, time_frac::Float64, comp::Compoundin
   return implied_rate(1.0 / discount(yts, t), yts.dc, comp, t, freq)
 end
 
-function forward_rate(yts::YieldTermStructure, date1::Date, date2::Date, dc::DayCount, comp::CompoundingType, freq::Frequency)
+function forward_rate(yts::YieldTermStructure, date1::Date, date2::Date, dc::DayCount, comp::CompoundingType, freq::Frequency = Annual())
   if date1 == date2
     t1 = max(time_from_reference(yts, date1) - 0.0001 / 2.0, 0.0)
     t2 = t1 + 0.0001
@@ -64,9 +64,9 @@ function forward_rate(yts::YieldTermStructure, date1::Date, date2::Date, dc::Day
   end
 end
 
-forward_rate(yts::YieldTermStructure, date::Date, period::Integer, dc::DayCount, comp::CompoundingType, freq::Frequency) = forward_rate(yts, date, date + Dates.Day(period), dc, comp, freq)
+forward_rate(yts::YieldTermStructure, date::Date, period::Integer, dc::DayCount, comp::CompoundingType, freq::Frequency = Annual()) = forward_rate(yts, date, date + Dates.Day(period), dc, comp, freq)
 
-function forward_rate(yts::YieldTermStructure, time1::Float64, time2::Float64, comp::CompoundingType, freq::Frequency)
+function forward_rate(yts::YieldTermStructure, time1::Float64, time2::Float64, comp::CompoundingType, freq::Frequency = Annual())
   if time1 == time2
     t1 = max(time1 - 0.0001 / 2.0, 0.0)
     t2 = t1 + 0.0001
@@ -78,7 +78,9 @@ function forward_rate(yts::YieldTermStructure, time1::Float64, time2::Float64, c
   return implied_rate(compound, yts.dc, comp, interval, freq)
 end
 
-## FlatForwardTermStructure
+forward_rate(::NullYieldTermStructure, ::Date, ::Integer, ::DayCount, ::CompoundingType, ::Frequency = Annual()) = implied_rate(1.0, Act365(), SimpleCompounding(), 1.0e-2, JsQL.Time.NoFrequency())
+forward_rate(::NullYieldTermStructure, ::Float64, ::Float64, ::CompoundingType, ::Frequency = Annual()) = implied_rate(1.0, Act365(), SimpleCompounding(), 1.0e-2, JsQL.Time.NoFrequency())
+
 mutable struct FlatForwardTermStructure{B <: BusinessCalendar, DC <: DayCount, C <: CompoundingType, F <: Frequency} <: YieldTermStructure
   settlementDays::Int
   referenceDate::Date

@@ -35,19 +35,6 @@ function dupire_formula_denominator(f::Function, y::Float64, bump::Float64 = 1.0
     ret += 0.5 * ddw
 end
 
-mutable struct LocalVol{DC <:DayCount, IV <: ImpliedVolatility} <:LocalVolTermStructure
-    referenceDate::Date
-    settlementDays::Int
-    volatility::IV 
-    dc::DC
-end
 
-LocalVol(refDate::Date, volatility::IV, dc::DayCount) where {IV <: ImpliedVolatility}=LocalVol(refDate, 0, volatility, dc)
 
-local_vol_impl(volTS::LocalVol, t::Float64, x::Float64) = local_vol_impl(volTS.volatility, t, x)
-
-struct CentralDifference 
-    order::Int
-    bump::Float64
-end
 

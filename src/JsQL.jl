@@ -4,9 +4,9 @@ module JsQL
 const bp = 0.0001
 const ε = 1.0e-10
 
-include("Time/Times.jl")
+include("Time/Time.jl")
 include("Math/Math.jl")
-using JsQL.Math, JsQL.Times
+using JsQL.Math, JsQL.Time
 
 export bp, ε
 
@@ -16,7 +16,7 @@ PositionType, AbstractCurrency,
 #
 CompoundingType, TermStructure, YieldTermStructure, CreditTermStructure, ConvenienceTermStructure,
 VolatilityTermStructure, OptionletVolatilityStructure, SwaptionVolatilityStructure,
-CashFlows, Leg, CashFlow, Coupon, Duration, IborCouponPricer,
+CashFlows, Leg, CashFlow, Coupon, Duration, IborCouponPricer, 
 # term
 VoltilityType, ImpliedVolatility,
 # Payoff and Exercise
@@ -24,8 +24,8 @@ Exercise, StrikedTypePayoff,
 # PricingEngine
 PricingEngine
 export #Process
-AbstractBlackScholes, EulerDiscretization, GeneralizedBalckScholesProcess, drift, diffusion, 
-state_variable, black_variance, forward_price
+AbstractBlackScholesProcess, EulerDiscretization, BalckScholes, drift, diffusion, 
+state_variable, black_variance, forward_price, BsmDiscreteDiv, accumulated_dividend, dividend_deduction
 export # lazy.jl
 LazyMixin
 export #interest_rate.jl
@@ -34,12 +34,14 @@ implied_rate
 export # Quote/Quote.jl
 Quote
 export # TermStructure/curve.jl
-Curve, InterpolatedCurve, ZeroCurve, InterpolatedDiscountCurve
+Curve, InterpolatedCurve, ZeroCurve, InterpolatedDiscountCurve, discount
+export # TermStructure/Yield
+NullYieldTermStructure
 export # Termstructures/Volatility
 ConstantOptionVolatility, BlackConstantVol, local_vol,
 local_vol_impl, FunctionalSurface
 export # implied_Volatility.jl
-LocalVol, ImpliedVolatilitySurface, FunctionalSurface
+LocalVolSurface, ImpliedVolatilitySurface, FunctionalSurface
 export # svi
 RawSvi, RawSviBaseConstraint, 
 RawSviButterFlyConstraint, CalendarConstraint, SviCost, RawSviIntialValue, Svi,
@@ -47,7 +49,7 @@ ProjectedSviJw, ProjCalendarConstraint, ProjectedSviJwButterFlyConstraint,
 ProjectedSviJwCost, ProjectedSviJwBaseConstraint, SVI_BUMP, SsviPhi, 
 QuotientSsviBase, QuotientButterfly, SsviCalendar, SsviCost, Ssvi,
 jw_to_raw, ssvi_to_jw, raw_to_jw, ssvi_to_raw
-export # Times.jl
+export # Time.jl
 Act360, Act365, BondThirty360, EuroBondThirty360, NoFrequency, Annaul, SemiAnnaul, day_count
 export #currencies.jl
 AbstractCurrency, NullCurrency, Currency
@@ -73,6 +75,7 @@ export #pricing_engine.jl
 NullPricingEngine
 export # utils.jl
 interospect_index_ratio, CentralDifference
+
 # ------------
 # ------------
 
@@ -103,12 +106,12 @@ end
 include("abstract_type.jl")
 
 include("currencies/currencies.jl")
-include("Time/DayCount.jl")
 include("InterestRate.jl")
 include("observer.jl")
 include("lazy.jl")
 include("Quote/Quote.jl")
 include("TermStructures/TermStructure.jl")
+include("TermStructures/Yield/yield_term_structure.jl")
 include("TermStructures/curve.jl")
 include("TermStructures/yield/zero_curve.jl")
 include("TermStructures/volatility/vol_term_structure.jl")
@@ -138,6 +141,7 @@ include("Instruments/payoff.jl")
 include("PricingEngine/pricing_engine.jl")
 # utils.jl
 include("utils.jl")
+
 mutable struct Settings
     evaluation_date::Date
     counter::Int

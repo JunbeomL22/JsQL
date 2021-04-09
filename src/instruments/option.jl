@@ -49,7 +49,7 @@ end
 
 mutable struct VanillaOption{P <: StrikedTypePayoff, E <: Exercise, PE <: PricingEngine} <: OneAssetOption{E}
     lazyMixin::LazyMixin
-    payoff::SegmentationFault
+    payoff::P
     exercise::E
     pricingEngine::PE
     results::OptionResults

@@ -1,4 +1,4 @@
-using JsQL.Times, JsQL.Math
+using JsQL.Time, JsQL.Math
 """
 Coupon (<: CashFlow, both are abstract) has CouponMixin \n
 CashFlow >: Coupon >: FixedRateCoupon
@@ -86,8 +86,3 @@ function has_occurred(cf::CashFlow, ref_date::Date, include_settlement_cf::Bool 
         return true
     end
 end
-
-
-
-date(coup::Coupon) = coup.paymentDate
-date_accrual_end(coup::Coupon) = accrual_end_date(coup)

@@ -1,4 +1,4 @@
-using JsQL.Times
+using JsQL.Time
 
 mutable struct FixedRateCoupon{DC<: DayCount, IR <: InterestRate} <: Coupon
     couponMixin::CouponMixin{DC}

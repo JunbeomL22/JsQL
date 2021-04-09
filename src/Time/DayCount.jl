@@ -52,3 +52,7 @@ end
 
 year_fraction(c::DayCount, st::Date, ed::Date) = day_count(c, st, ed) / days_per_year(c)
 
+function year_fraction(st::Date, ed::Date)
+    ed >= st || error("end date is earlier thatn start date")
+    return (ed-st).value / 365.0
+end     

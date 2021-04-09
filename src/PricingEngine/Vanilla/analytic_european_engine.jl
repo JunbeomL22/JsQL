@@ -10,5 +10,5 @@ function _calculate!(pe::AnalyticEuropeanEngine, opt::EuropeanOption)
     riskFreeDiscount=discount(pe.process.riskFreeRate, opt.exercise.dates[end])
 
     spot = state_variable(pe.process).value
-    forwardPrice = spot * dividendDiscount / riskFreeDiscount
+    forward_price(pe.process, opt.exercise.dates[end])
 end

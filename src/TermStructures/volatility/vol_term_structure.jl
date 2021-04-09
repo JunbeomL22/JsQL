@@ -64,4 +64,4 @@ end
 
 LocalVolSurface(refDate::Date, volatility::IV, dc::DayCount) where {IV <: ImpliedVolatility}=LocalVolSurface(refDate, 0, volatility, dc)
 
-local_vol_impl(volTS::LocalVol, t::Float64, x::Float64) = local_vol_impl(volTS.volatility, t, x)
+local_vol_impl(volTS::LocalVolSurface, t::Float64, x::Float64) = local_vol_impl(volTS.volatility, t, x)

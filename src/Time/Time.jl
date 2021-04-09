@@ -1,6 +1,7 @@
-module Times
+module Time
 
-import Dates.Date
+using Dates
+import Dates.adjust
 
 # Date helper function
 # just curious. Is it that useful?
@@ -26,7 +27,7 @@ easter_date, easter_rata, advance, adjust,
 BusinessDayConvention, Unadjusted, ModifiedFollowing, Following, Preceding, ModifiedPreceding,
 is_holiday, is_endofmonth,
 # south_korea.jl
-SouthKoreaKrxCalendar, SouthKoreaSettlementCalendar, 
+NullCalendar, SouthKoreaKrxCalendar, SouthKoreaSettlementCalendar, 
 # united_states.jl
 USNYSECalendar, USSettlementCalendar, USGovernmentBondCalendar, 
 # united_kingdom.jl
