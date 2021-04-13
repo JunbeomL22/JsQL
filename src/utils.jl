@@ -38,3 +38,6 @@ function (c::CentralDifference)(f::Function, x::Float64)
     end 
     return ret
 end
+
+const RateTenorMonth = [0, 3, 6, 9, 12, 18, 24, 30, 36, 48, 60, 84, 120, 180, 240, 360]
+const RateTenorTime = [0.0, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.0, 10.0, 15.0, 20.0, 30.0]

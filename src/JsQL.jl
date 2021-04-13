@@ -67,8 +67,9 @@ export # least_square
 Monomial, MonomialFunction, path_basis_system!, get_type
 export # 
 value, gradient
-export # instruments
-PlainVanillaPayoff, ForwardTypePayoff, Put, Call, FaceValueClaim
+export # Instruments
+PlainVanillaPayoff, ForwardTypePayoff, Put, Call, FaceValueClaim,
+Range, Barrier, LowerRange, UpperRange, LowerBarrier, UpperBarrier
 export #exercise.jl 
 EuropeanExercise, AmericanExercise, BermudanExercise
 export #pricing_engine.jl
@@ -76,8 +77,6 @@ NullPricingEngine
 export # utils.jl
 interospect_index_ratio, CentralDifference
 
-# ------------
-# ------------
 
 function value(::JsQL.Math.CostFunction, x::Vector{Float64})
     return 0.0
@@ -137,6 +136,7 @@ include("exercise.jl")
 # Instrument ---------------------
 include("Instruments/claim.jl")
 include("Instruments/payoff.jl")
+include("Instruments/barrier.jl")
 # PricingEngine --------
 include("PricingEngine/pricing_engine.jl")
 # utils.jl

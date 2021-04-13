@@ -25,6 +25,7 @@ I take Musiela-Rutkowski formula. \n
 Reference for the variation of discrete dividend: \n
 https://quant.stackexchange.com/questions/16129/black-scholes-formula-with-deterministic-discrete-dividend-musiela-approach
 """
+
 function BsCalculator(process::P, option::EuropeanOption) where {P <: AbstractBlackScholesProcess}
     payoff = option.payoff
     maturity = option.exercise.dates[end]
@@ -70,48 +71,44 @@ function reset!(calc::BsCalculator)
     n_d1 = cdf(Normal(), d1)
     n_d2 = cdf(Normal(), d2)
 end
+
 function value(calc::BsCalculator)
-    ret = calc.x * calc.n_d1 - calc.rateDiscount * (calc.strike + calc.compoundDiv) * calc.n_d2
+    call_price = calc.x0 * calc.n_d1 - calc.rateDiscount * (calc.strike + calc.compoundDiv) * calc.n_d2
+
     if calc.payoff.opt == Call()
-        return ret
+        return call_price
     else
-        return ret - calc.forward_value
+        return call_price - calc.forward_value
     end
 end
 
-function delta(calc::BsCalculator, ϵ::Float64 = 0.01)
-    calculator = deepcopy(calc)
-    calculator.x0 += ϵ
-    pos_val = value(calculator)
-    calculator.x0 -= ϵ
-    neg_val = vlaue(calculator)
-
-    return (pos_val - neg_val) / (2.0* ϵ)
+function delta(calc::BsCalculator)
+    call_delta = calc.divDiscount * calc.n_d1
+    if calc.payoff.opt == Call()
+        return call_delta
+    else
+        return call_price - calc.divDiscount
+    end
 end
 
-function vega(calc::BsCalculator, ϵ::Float64 = 0.01)
-    calculator = deepcopy(calc)
-    calculator.x0 += ϵ
-    pos_val = value(calculator)
-    calculator.x0 -= ϵ
-    neg_val = vlaue(calculator)
-
-    return (pos_val - neg_val) / (2.0* ϵ)
+function gamma(calc::BsCalculator)
+    ret = calc.divDiscount / (calc.x0 * calc.stdDev) * exp(-calc.d1^2.0 / 2.0) / sqrt(2.0 * π) 
 end
 
-function gamma(calc::BsCalculator, ϵ::Float64 = 0.01)
+function vega(calc::BsCalculator)
+    ret = 0.01 * calc.x0 * calc.divDiscount * sqrt(calc.matTime / (2.0*π)) * exp(- calc.d1^2.0 / 2.0)
+    return ret
+end
+
+function theta(calc::BsCalculator)
     
 end
 
-function theta(calc::BsCalculator, ϵ::Float64 = 1.0/250.)
-    
+function rho(calc::BsCalculator)
+    ret = 0.01 * (calc.strike + calc.compoundDiv)*calc.matTime * calc.rateDiscount * calc.n_d2
 end
 
-function rho(calc::BsCalculator, ϵ::Float64 = 0.0001)
-    
-end
-
-function div_rho(calc::BsCalculator, ϵ::Float64 = 0.0001)
+function div_rho(calc::BsCalculator)
     
 end
 
