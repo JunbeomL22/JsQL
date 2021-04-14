@@ -42,7 +42,7 @@ function BsCalculator(process::P, option::EuropeanOption) where {P <: AbstractBl
     std_dev = process.BlackConstantVol.volatility.value*sqrt(mat_time)
     x0 = process.x0.value
     #musiela formula below
-    d1 = ( log(x/(strike + compound_div) )  - log(rate_disc) + 0.5*std_dev^2.0 ) / std_dev
+    d1 = ( log(x/(strike + compound_div) )  + log(div_disc/rate_disc) + 0.5*std_dev^2.0 ) / std_dev
     d2 = d1 - std_dev
     n_d1 = cdf(Normal(), d1)
     n_d2 = cdf(Normal(), d2)
@@ -54,7 +54,7 @@ function BsCalculator(process::P, option::EuropeanOption) where {P <: AbstractBl
                         d1, d2, n_d1, n_d2, x0)
 end
 
-function reset!(calc::BsCalculator)
+function initialize!(calc::BsCalculator)
     calc.matTime = year_fraction(calc.process.riskFreeRate.referenceDate, calc.maturity)
     calc.compoundDiv = compounded_accumulated_dividend(calc.process, 0.0, calc.matTime )
 
@@ -66,19 +66,26 @@ function reset!(calc::BsCalculator)
 
     calc.stdDev = calc.process.BlackConstantVol.volatility.value * sqrt(calc.matTime)
     
-    calc.d1 = ( log(x/(calc.strike + calc.compoundDiv) )  - log(calc.rateDiscount) + 0.5 * calc.stdDev^2.0 ) / calc.stdDev
+    calc.d1 = ( log(x/(calc.strike + calc.compoundDiv) )  + log(calc.divDiscount / calc.rateDiscount) + 0.5 * calc.stdDev^2.0 ) / calc.stdDev
     d2 = d1 - std_dev
     n_d1 = cdf(Normal(), d1)
     n_d2 = cdf(Normal(), d2)
 end
 
-function value(calc::BsCalculator)
-    call_price = calc.x0 * calc.n_d1 - calc.rateDiscount * (calc.strike + calc.compoundDiv) * calc.n_d2
+function value(calc::BsCalculator, spot::Float64 = -Inf)
+    if spot == -Inf
+        call_price = calc.x0 * calc.n_d1 - calc.rateDiscount * (calc.strike + calc.compoundDiv) * calc.n_d2
 
-    if calc.payoff.opt == Call()
-        return call_price
+        if calc.payoff.opt == Call()
+            return call_price
+        else
+            return call_price - calc.forward_value
+        end
     else
-        return call_price - calc.forward_value
+        _process = deepcopy(calc.process)
+        _process.x0.value = spot
+        _opt = deepcopy(calc.option)
+        _calc= deep
     end
 end
 
@@ -95,6 +102,10 @@ function gamma(calc::BsCalculator)
     ret = calc.divDiscount / (calc.x0 * calc.stdDev) * exp(-calc.d1^2.0 / 2.0) / sqrt(2.0 * π) 
 end
 
+"""
+vega(calc::BsCalculator) \n
+1\% vega
+"""
 function vega(calc::BsCalculator)
     ret = 0.01 * calc.x0 * calc.divDiscount * sqrt(calc.matTime / (2.0*π)) * exp(- calc.d1^2.0 / 2.0)
     return ret
@@ -103,13 +114,25 @@ end
 function theta(calc::BsCalculator)
     
 end
-
+"""
+rho(calc::BsCalculator) \n
+1% rho \n
+I ignore the rho from dividends, more precisely \n
+d_r V(r, D(r)) = ∂_r V(r, D(r)) + ∂_D V(r, D(r)) ∂_r D(r) ≈ ∂_r V(r, D(r)) \n
+"""
 function rho(calc::BsCalculator)
-    ret = 0.01 * (calc.strike + calc.compoundDiv)*calc.matTime * calc.rateDiscount * calc.n_d2
+    call_rho = 0.01 * (calc.strike + calc.compoundDiv)*calc.matTime * calc.rateDiscount * calc.n_d2
+    put_rho  = -0.01 * (calc.strike + calc.compoundDiv)*calc.matTime * calc.rateDiscount * cdf(Normal(), -calc.d2)
+    return calc.payoff.opt == Call() ? call_rho : put_rho
 end
-
+"""
+div_rho(calc::BsCalculator) \n
+1% dividend rho from the continuous dividend rate. The discrete part is not calculated.\n
+"""
 function div_rho(calc::BsCalculator)
-    
+    call_rho = - 0.01 * calc.matTime * calc.divDiscount * calc.x0 * calc.n_d1
+    put_rho  = call_rho - 0.01 * calc.x0 * calc.matTime * calc.divDiscount / calc.rateDiscount
+    return calc.payoff.opt == Call() ? call_rho : put_rho
 end
 
 
