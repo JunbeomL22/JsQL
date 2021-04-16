@@ -25,21 +25,6 @@ function ZeroCurve(dates::Vector{Date}, rates::Vector{Float64},
     return zc
 end
 
-function ZeroCurve(refDate::Date, times::Vector{Float64}, rates::Vector{Float64}, 
-    dc::DC, interpolator::P) where {DC <: DayCount, P <: Interpolation}
-    times[1] ≈ 0.0 || error("The first argument in times vector must be 0.0, which means today.")
-    zc = ZeroCurve{DC, P, NullCalendar}(0, refDate, dc, interpolator, 
-                    NullCalendar(), Vector{Date}(undef, length(times)), 
-                    times, discounts)
-    
-    #initialize!(zc)
-    Math.initialize!(zc.interp, zc.times, zc.data)
-
-    Math.update!(zc.interp)
-
-    return zc
-end
-
 function initialize!(zc::ZeroCurve)
     length(zc.Time) != length(zc.data) && error("dates / data mismatch")
     zc.times[1] = 0.0
@@ -55,16 +40,3 @@ function initialize!(zc::ZeroCurve)
     return zc
 end
 
-#=
-function discount_impl(zc::ZeroCurve, t::Float64)
-    if t ≤ zc.Time[end]
-      return Math.value(zc.interp, t)
-    end
-  -------------------------------------
-    # flat fwd extrapolation
-    tMax = zc.Time[end]
-    dMax = zc.data[end]
-    instFwdMax = Math.derivative(zc.interp, tMax) / dMax
-    return dMax * exp(-instFwdMax * (t - tMax))
-  end
-  =#

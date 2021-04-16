@@ -22,7 +22,9 @@ VoltilityType, ImpliedVolatility,
 # Payoff and Exercise
 Exercise, StrikedTypePayoff,
 # PricingEngine
-PricingEngine
+PricingEngine,
+# RandomNumber
+AbstractRandomSequenceGenerator
 export #Process
 AbstractBlackScholesProcess, EulerDiscretization, BalckScholes, drift, diffusion, 
 state_variable, black_variance, forward_price, BsmDiscreteDiv, accumulated_dividend, dividend_deduction
@@ -75,7 +77,7 @@ EuropeanExercise, AmericanExercise, BermudanExercise
 export #pricing_engine.jl
 NullPricingEngine
 export # utils.jl
-interospect_index_ratio, CentralDifference
+interospect_index_ratio, CentralDifference, cdf
 
 
 function value(::JsQL.Math.CostFunction, x::Vector{Float64})

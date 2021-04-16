@@ -48,3 +48,16 @@ function float_to_date(refDate::Date, x::Float64)
     dayF = floor((x-yearF-monthF/12.0)*365.0)
     return yearF, monthF, dayF
 end
+
+"""
+https://www.hrpub.org/download/20181230/MS1-13412146.pdf
+"""
+function cdf_approximation(x::Float64)
+    a=0.647 - 0.021*x
+    Φ = 0.5*(1.0+sqrt(1.0-exp(-a*x^2.0)))
+    if x >=0.0
+        return Φ
+    else
+        return 1.0 - cdf_approximation(-x)
+    end
+end

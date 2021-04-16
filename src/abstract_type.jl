@@ -66,3 +66,5 @@ abstract type EarlyExercise <: Exercise end
 abstract type PricingEngine end
 # Implied Volatility
 abstract type ImpliedVolatility end
+# Random Number GeneralBlackScholesType
+abstract type AbstractRandomSequenceGenerator end

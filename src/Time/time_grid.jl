@@ -7,6 +7,12 @@ mutable struct TimeGrid
     dt::Vector{Float64} # difference between points
     mandatoryTimes::Vector{Float64}
 end
+
+mutable struct DateGrid
+    dates::Vector{Date} # points
+    dt::Vector{Float64} # difference between points
+    mandatoryTimes::Vector{Float64}
+end
 """
 TimeGrid(times::Vector{Float64}, steps::Int) \n
 v = [1.0, 3.0, 10.]; steps = 5 \n

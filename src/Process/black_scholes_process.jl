@@ -153,3 +153,4 @@ function evolve(process::BlackScholes, t::Float64, x::Float64, dt::Float64, dw::
     return  x + drift(process.disc, process, t, x, dt) + diffusion(process.disc, t, x, dt) * dw - dividend
     
 end
+

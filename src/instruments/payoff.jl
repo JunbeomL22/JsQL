@@ -27,4 +27,13 @@ end
 (payoff::ForwardTypePayoff)(price::Float64) = _get_payoff(payoff, price)
 _get_payoff(payoff::ForwardTypePayoff, price::Float64)=value(payoff.optionType)*(price - payoff.strike)
 
+struct ElsPayoff <: AbstractPayoff
+    rangeDates::Vector{Date}
+    lowerRanges::Vector{LowerRange}
+    barrier::LowerBarrier
+    lizardDates::Vector{Date}
+    lizardBarrier::Vector{Float64}
+    lowerBound::Float64
+end
+
 
