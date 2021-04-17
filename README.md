@@ -1,4 +1,6 @@
 # JsQL
 
-For theta,
-everything having referenceDate should be reset with settings.evaluationDate
+
+fro theta,
+every params does not change, parameters should be indexed by time not by date after initialization.
+path and payoff and products whould be re-initialized
