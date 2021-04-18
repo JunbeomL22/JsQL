@@ -1,4 +1,5 @@
 using JsQL
+import Base.length
 
 # import Base.getindex, Base.lastindex
 
@@ -8,10 +9,45 @@ mutable struct TimeGrid
     mandatoryTimes::Vector{Float64}
 end
 
-mutable struct DateGrid
-    dates::Vector{Date} # points
-    dt::Vector{Float64} # difference between points
+mutable struct DateTimeGrid
+    refDate::Date
+    dates::Vector{Date} # The first date is the refDate
+    times::Vector{Float64} # points
+    dt::Vector{Float64} # difference between times,
+    mandatoryDates::Vector{Date}
     mandatoryTimes::Vector{Float64}
+end
+
+length(grid::DateTimeGrid) = length(grid.dates)
+
+function DateTimeGrid(refDate::Date, maturity::Date;
+                cal::BusinessCalendar=SouthKoreaSettlementCalendar(), mandDates::Vector{Date}=Date[])
+    maturity = adjust(cal, maturity)
+    refDate <= maturity || error("refdate is later than maturity in DateTimeGrid.")
+
+    days = (maturity - refDate).value
+    dates = Vector{Date}(undef, days+1)
+    dates[1] = refDate
+    date = deepcopy(refDate)
+    idx = 1
+    @inbounds @simd for i = 1:days
+        d = refDate + Day(i)
+        if is_business_day(cal, d) || d in mandDates
+            idx +=1
+            dates[idx] = d
+        end 
+    end
+    dates = dates[1:idx]
+
+    _fraction(x) = year_fraction(refDate, x)
+    times = _fraction.(dates)
+    mandTimes = _fraction.(mandDates)
+    if length(times) == 1
+        dt = [0.0]
+    else
+        dt = times[2:end] - times[1:end-1]
+    end
+    return DateTimeGrid(refDate, dates, times, dt, mandDates, mandTimes)
 end
 """
 TimeGrid(times::Vector{Float64}, steps::Int) \n

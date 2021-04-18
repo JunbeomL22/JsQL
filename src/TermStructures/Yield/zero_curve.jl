@@ -26,14 +26,14 @@ function ZeroCurve(dates::Vector{Date}, rates::Vector{Float64},
 end
 
 function initialize!(zc::ZeroCurve)
-    length(zc.Time) != length(zc.data) && error("dates / data mismatch")
+    length(zc.times) != length(zc.discounts) && error("dates / data mismatch")
     zc.times[1] = 0.0
     @simd for i = 2:length(zc.dates)
         @inbounds zc.times[i] = year_fraction(zc.dc, zc.dates[1], zc.dates[i])
     end
-    zc.discounts = exp.( - times .* rates)
+    zc.discounts = exp.( - zc.times .* zc.rates)
     # initialize interpolator
-    Math.initialize!(zc.interp, zc.Time, zc.discounts)
+    Math.initialize!(zc.interp, zc.times, zc.discounts)
 
     Math.update!(zc.interp)
 

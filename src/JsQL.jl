@@ -78,7 +78,8 @@ export #pricing_engine.jl
 NullPricingEngine
 export # utils.jl
 interospect_index_ratio, CentralDifference, cdf
-
+export 
+Path
 
 function value(::JsQL.Math.CostFunction, x::Vector{Float64})
     return 0.0
@@ -137,8 +138,9 @@ include("Process/discretization.jl")
 include("exercise.jl")
 # Instrument ---------------------
 include("Instruments/claim.jl")
-include("Instruments/payoff.jl")
 include("Instruments/barrier.jl")
+include("Method/MonteCarlo/path.jl")
+include("Instruments/payoff.jl")
 # PricingEngine --------
 include("PricingEngine/pricing_engine.jl")
 # utils.jl

@@ -1,14 +1,23 @@
+function interospect_index_ratio(x::T, v::Vector{T}) where {T<: Any}
+    issorted(v) || error("the vector in instrospection util is not sorted.")
+    i = findfirst(λ-> λ >= x , v)
+    if i == nothing 
+        return length(v)
+    else
+        return i
+    end
+end
 """
 interospect_index_ratio(x::Float64, v::Vector{Float64}) \n
 If x = 4 and v = [1,3,6,7], this returns 3, (1/3, 2/3) \n
 If x = 1 and v = [2,3,4], this returns 1, (0.0, 1.0)
 """
-function interospect_index_ratio(x::T1, v::Vector{T2}) where {T1 <: Number, T2 <: Number}
+function interospect_index_ratio(x::Float64, v::Vector{Float64})
     issorted(v) || error("the vector in instrospection util is not sorted.")
-    i = findfirst(λ-> λ>x , v)
+    i = findfirst(λ-> λ > x , v)
     if i == 1
         return 1, (0.0, 1.0)
-    elseif i == nothing
+    elseif i == nothing 
         return length(v), (1.0, 0.0)
     else
         st = v[i-1]
@@ -18,6 +27,7 @@ function interospect_index_ratio(x::T1, v::Vector{T2}) where {T1 <: Number, T2 <
         return i, (diff/len, 1.0-diff/len)
     end
 end
+
 
 struct CentralDifference 
     order::Int

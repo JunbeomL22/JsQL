@@ -41,7 +41,7 @@ DateGenerationRule, DateGenerationForwards, DateGenerationBackwards, DateGenerat
 Schedule
 
 export # time_grid.jl
-TimeGrid, is_empty, closest_time, return_index
+TimeGrid, DateTimeGrid, is_empty, closest_time, return_index
 
 include("Frequency.jl")
 include("DayCount.jl")

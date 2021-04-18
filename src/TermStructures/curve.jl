@@ -17,7 +17,7 @@ discount(curve::Curve, t::Float64) = discount_impl(curve, t)
 
 function discount_impl(curve::Curve, t::Float64)
     #calculate!(curve)
-    if t ≤ curve.Time[end]
+    if t ≤ curve.times[end]
         return Math.value(curve.interp, t)
     end
     return 0.0
