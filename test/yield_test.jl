@@ -19,4 +19,3 @@ rf.referenceDate += Day(1)
 
 println(discount(rf, Date(2021, 5, 5)))
 
-

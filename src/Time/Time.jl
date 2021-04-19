@@ -25,7 +25,7 @@ export # BusinessCalendar.jl
 BusinessCalendar, WesternCalendar, KoreaCalendar, JointCalendar,
 easter_date, easter_rata, advance, adjust, 
 BusinessDayConvention, Unadjusted, ModifiedFollowing, Following, Preceding, ModifiedPreceding,
-is_holiday, is_endofmonth,
+is_holiday, is_endofmonth, is_business_day,
 # south_korea.jl
 NullCalendar, SouthKoreaKrxCalendar, SouthKoreaSettlementCalendar, 
 # united_states.jl

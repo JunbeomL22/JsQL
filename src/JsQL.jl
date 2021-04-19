@@ -20,7 +20,7 @@ CashFlows, Leg, CashFlow, Coupon, Duration, IborCouponPricer,
 # term
 VoltilityType, ImpliedVolatility,
 # Payoff and Exercise
-Exercise, StrikedTypePayoff,
+Exercise, StrikedTypePayoff, PerformanceType, Worst, Best, ElsPayoff,
 # PricingEngine
 PricingEngine,
 # RandomNumber
@@ -141,6 +141,7 @@ include("Instruments/claim.jl")
 include("Instruments/barrier.jl")
 include("Method/MonteCarlo/path.jl")
 include("Instruments/payoff.jl")
+include("Instruments/els_payoff.jl")
 # PricingEngine --------
 include("PricingEngine/pricing_engine.jl")
 # utils.jl

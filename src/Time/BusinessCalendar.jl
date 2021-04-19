@@ -59,7 +59,7 @@ function easter_rata(y::Int)
   
     # Shifted Epact
     e = mod(14 + 11*(mod(y, 19)) - div(3*c, 4) + div(5+8*c, 25), 30)
-  1
+  
     # Adjust Epact
     if (e == 0) || ((e == 1) && ( 10 < mod(y, 19) ))
         e += 1
@@ -201,5 +201,5 @@ function is_holiday(::TargetCalendar, dt::Date)
 end
 
 function is_endofmonth(d::Date)
-    d = lastdayofmonth(d)
+    return d == lastdayofmonth(d)
 end

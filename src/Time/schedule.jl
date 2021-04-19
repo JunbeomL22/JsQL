@@ -55,7 +55,7 @@ constructor of forward DateGenerationBackward
 """
 function Schedule(effectiveDate::Date, terminationDate::Date, tenor::TenorPeriod, 
                 convention::B, termDateConvention::B1, rule::DateGenerationForwards, 
-                endOfMonth::Bool, cal::C = TargetCalendar()) where 
+                endOfMonth::Bool, cal::C = SouthKoreaSettlementCalendar()) where 
                 {B <: BusinessDayConvention, B1 <: BusinessDayConvention, C <: BusinessCalendar}
     # BOB
     dates = Vector{Date}()
@@ -78,7 +78,7 @@ end
 function Schedule(effectiveDate::Date, terminationDate::Date,
                 tenor::TenorPeriod, convention::B, termDateConvention::B1,
                 rule::DateGenerationBackwards, endOfMonth::Bool,
-                cal::C = TargetCalendar()) where 
+                cal::C = SouthKoreaSettlementCalendar()) where 
                     {B <: BusinessDayConvention, B1 <: BusinessDayConvention, 
                     C <: BusinessCalendar}
     size = get_size(tenor.period, effectiveDate, terminationDate) # get_size is defined later
@@ -97,7 +97,7 @@ end
 
 function Schedule(effectiveDate::Date, terminationDate::Date, tenor::TenorPeriod,
                 convention::B, termDateConvention::B1, rule::DateGenerationTwentieth,
-                endOfMonth::Bool, cal::C = TargetCalendar()) where 
+                endOfMonth::Bool, cal::C = SouthKoreaSettlementCalendar()) where 
                 {B <: BusinessDayConvention, B1 <: BusinessDayConvention, C <: BusinessCalendar}
     dates = Vector{Date}()
     dt = effectiveDate
