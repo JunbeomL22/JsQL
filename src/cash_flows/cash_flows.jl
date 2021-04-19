@@ -53,7 +53,6 @@ mutable struct IRRFinder
     # to be implemented
 end
 
-
 get_payment_dates(coups::Vector{C}) where {C <: Coupon} = Date[payment_date(coup) for coup in coups]
 get_fixing_dates(coups::Vector{C}) where {C <: Coupon} = Date[fixing_date(coup) for coup in coups]
 
