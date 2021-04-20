@@ -16,7 +16,7 @@ PositionType, AbstractCurrency,
 #
 CompoundingType, TermStructure, YieldTermStructure, CreditTermStructure, ConvenienceTermStructure,
 VolatilityTermStructure, OptionletVolatilityStructure, SwaptionVolatilityStructure,
-CashFlows, Leg, CashFlow, Coupon, Duration, IborCouponPricer, 
+CashFlows, Leg, CashFlow, Coupon, Duration, 
 # term
 VoltilityType, ImpliedVolatility,
 # Payoff and Exercise
@@ -79,7 +79,7 @@ export # cash_flows/fixed_rate_coupon.jl
 FixedRateCoupon, FixedRateLeg
 
 export # cash_flows/floating_rate_coupon.jl
-BlackIborCouponPricer, IborCoupon, IborLeg, update_pricer!
+FloatingCoupon, FloatingLeg, update_pricer!
 
 export # least_square
 Monomial, MonomialFunction, path_basis_system!, get_type

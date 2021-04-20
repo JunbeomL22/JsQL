@@ -12,7 +12,10 @@ schedule = Schedule(issueDate, maturity, tenor_period, Following(), date_generat
 
 fixingDays = 0
 
-bond = FixedCouponBond(1, 100.0, schedule, 0.0, Act365(), Following(), issueDate, SouthKoreaSettlementCalendar(), DiscountingBondEngine())
+#bond = FixedCouponBond(1, 100.0, schedule, 0.0, Act365(), Following(), issueDate, SouthKoreaSettlementCalendar(), DiscountingBondEngine())
+bond = FixedCouponBond(1, 100.0, issueDate, maturity, SouthKoreaSettlementCalendar(), 
+                        SemiAnnual(), 0.02, Act365())
+
 
 tenors = eval_date + Month.([6*i for i = 0:8])
 rates = [0.0, 0.01, 0.012, 0.013, 0.014, 0.015, 0.016, 0.016, 0.016]

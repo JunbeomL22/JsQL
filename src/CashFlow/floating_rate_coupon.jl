@@ -1,52 +1,21 @@
 using JsQL.Time, JsQL.Math
 
-mutable struct IborCoupon{DC <: DayCount, X <: InterestRateIndex, ICP <: IborCouponPricer} <: Coupon
+mutable struct FloatingCoupon{DC <: DayCount, X <: InterestRateIndex, IR <: InterestRate} <: Coupon
     couponMixin::CouponMixin{DC}
-    paymentDate::Date
     nominal::Float64
-    fixingDate::Date # T
-    fixingValueDate::Date # e.g., T + 2
-    fixingEndDate::Date # e.g., T + 2 + 3M
-    fixingDays::Int
-    iborIndex::X # this has YTS, and then the YTS is passed to pricer
-    gearing::Float64 
+    index::X # this has YTS, and then the YTS is passed to pricer
     spread::Float64
-    isInArrears::Bool
-    spanningTime::Float64 # val_end - val_start
-    pricer::ICP
+    pastFixings::Float64 # historical if it is necessary
+    forcastedRate::IR
 end
 
-function IborCoupon(paymentDate::Date,
-                nominal::Float64,
-                startDate::Date,
-                endDate::Date,
-                fixingDays::Int,
-                iborIndex::X,
-                gearing::Float64,
-                spread::Float64,
-                refPeriodStart::Date,
-                refPeriodEnd::Date,
-                dc::DC,
-                isInArrears::Bool,
-                pricer::ICP) where {X <: InterestRateIndex, DC <: DayCount, ICP <: IborCouponPricer}
+function FloatingCoupon(fixingDate::Date, calcStartDate::Date, 
+                        calcEndDate::Date, paymentDate::Date, 
+                        faceAmount::Float64, index::X) where {DC <: DayCount, X <: InterestRateIndex} 
     # BoB
-    _fixing_date = isInArrears ? fixing_date(iborIndex, endDate) : fixing_date(iborIndex, startDate)
-    fixing_cal = iborIndex.fixingCalendar
-    idx_fixing_days = iborIndex.fixingDays
-    fixing_val_date = advance(Dates.Day(idx_fixing_days), fixing_cal, _fixing_date, iborIndex.convention)
+    accrual = year_fraction(index.dc, calcStartDate, calcEndDate)
 
-    if isInArrears
-        fixing_end_date = maturity_date(iborIndex, fixing_val_date)
-    else
-        next_fixing = advance(-Dates.Day(fixingDays), fixing_cal, endDate, iborIndex.convention)
-        fixing_end_date = advance(Dates.Day(idx_fixing_days), fixing_cal, next_fixing, iborIndex.convention)
-    end
-
-    spanning_time = year_fraction(iborIndex.dc, fixing_val_date, fixing_end_date)
-
-    ## TODO ensure positive (> 0) spanning_time
-
-    return IborCoupon{DC, X, ICP}(CouponMixin{DC}(startDate, endDate, refPeriodStart, refPeriodEnd, dc, -1.0), paymentDate, nominal, _fixing_date, fixing_val_date,
+    return IborCoupon{DC, X}(CouponMixin{DC}(startDate, endDate, refPeriodStart, refPeriodEnd, dc, -1.0), paymentDate, nominal, _fixing_date, fixing_val_date,
                     fixing_end_date, fixingDays, iborIndex, gearing, spread, isInArrears, spanning_time, pricer)
 end
 

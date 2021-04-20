@@ -44,6 +44,37 @@ mutable struct FixedCouponBond{DC <: DayCount, P <: PricingEngine, C <:Compoundi
     results::BondResults
 end
 
+function FixedCouponBond(paymentDays::Int, faceAmount::Float64,
+                        issueDate::Date, maturity::Date, calendar::C, 
+                        couponFreq::Frequency, 
+                        coup_rate::Float64, dc::DC, 
+                        couponGenerationRule::DateGenerationRule = DateGenerationForwards(), 
+                        couponConvention::B = Unadjusted(),
+                        paymentConvention::B = Following(),
+                        pricingEngine::P = DiscountingBondEngine(),
+                        add_redemption::Bool=true,
+                        ytm::Float64 = -Inf)
+    # BoB
+    tp = TenorPeriod(couponFreq)
+
+    schedule = Schedule(issueDate, maturity, tp, couponConvention, couponGenerationRule)
+
+    coups = FixedRateLeg(schedule, faceAmount, coup_rate, calendar, 
+                        0, paymentDays, couponConvention, paymentConvention,
+                        dc; add_redemption=add_redemption)
+
+    ytm_ir = InterestRate(ytm)
+    return FixedCouponBond{DC, P, SimpleCompounding, typeof(schedule.tenor.freq), typeof(ytm_ir)}(LazyMixin(), 
+                                                                                                BondMixin(0, paymentDays, issueDate, maturity),
+                                                                                                faceAmount,
+                                                                                                schedule,
+                                                                                                coups,
+                                                                                                dc,
+                                                                                                ytm_ir,
+                                                                                                pricingEngine,
+                                                                                                BondResults())
+end
+
 function FixedCouponBond(paymentDays::Int, 
                         faceAmount::Float64, schedule::Schedule,
                         coup_rate::Float64, dc::DC, paymentConvention::B,
