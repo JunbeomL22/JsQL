@@ -1,22 +1,4 @@
 using JsQL.Time, JsQL.Math
-#=
- The coupon pricers are designed to consider convexity adjustment.
- If you don't want it, just put NullOptionVolatilityStructure in the volatility attrribute.
-=#
-mutable struct BlackIborCouponPricer{O <: OptionletVolatilityStructure} <: IborCouponPricer
-    discount::Float64
-    spreadLegValue::Float64
-    accrual_period::Float64
-    initialized::Bool
-    volatility::O # convexity adjustment
-end
-
-function BlackIborCouponPricer()
-    return BlackIborCouponPricer{NullOptionVolatilityStructure}(0., 0., 0., false, 
-                                                        NullOptionVolatilityStructure())
-end
-
-BlackIborCouponPricer(capVol::OptionletVolatilityStructure) = BlackIborCouponPricer{typeof(capVol)}(0.0, 0.0, 0.0, false, capVol)
 
 mutable struct IborCoupon{DC <: DayCount, X <: InterestRateIndex, ICP <: IborCouponPricer} <: Coupon
     couponMixin::CouponMixin{DC}

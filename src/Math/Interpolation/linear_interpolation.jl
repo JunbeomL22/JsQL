@@ -2,11 +2,14 @@ mutable struct LinearInterpolation <: Interpolation
     x_vals::Vector{Float64}
     y_vals::Vector{Float64}
     s::Vector{Float64} # roughly, derivative 
+    extrapolate::Bool
 end
 
-LinearInterpolation() = LinearInterpolation(Float64[], Float64[], Float64[])
-function LinearInterpolation(x::Vector{Float64}, y::Vector{Float64}) 
+LinearInterpolation() = LinearInterpolation(Float64[], Float64[], Float64[], false)
+
+function LinearInterpolation(x::Vector{Float64}, y::Vector{Float64}, extra::Bool = false) 
     interp = LinearInterpolation()
+    interp.extrapolate = extra
     initialize!(interp, x, y)
     update!(interp)
     return interp
@@ -33,7 +36,11 @@ update!(interp::LinearInterpolation) = update!(interp, length(interp.y_vals))
   
 function value(interp::LinearInterpolation, val::Float64)
     i = locate(interp, val)
-    return interp.y_vals[i] + (val - interp.x_vals[i]) * interp.s[i]
+    if (val > interp.x_vals[end] && interp.extrapolate) || val <= interp.x_vals[end]
+        return interp.y_vals[i] + (val - interp.x_vals[i]) * interp.s[i]
+    else
+        return interp.y_vals[end]
+    end
 end
 
 function value_flat_outside(interp::LinearInterpolation, val::Float64)

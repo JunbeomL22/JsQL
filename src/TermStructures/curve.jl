@@ -16,11 +16,10 @@ max_date(curve::InterpolatedCurve) = curve.dates[end]
 discount(curve::Curve, t::Float64) = discount_impl(curve, t)
 
 function discount_impl(curve::Curve, t::Float64)
-    #calculate!(curve)
-    if t ≤ curve.times[end]
-        return Math.value(curve.interp, t)
+    if curve.times[end] < t
+        return exp(-t*curve.rates[end])
     end
-    return 0.0
+    return Math.value(curve.interp, t)
 end
 #=
 function perform_calculations!(curve::InterpolatedCurve)

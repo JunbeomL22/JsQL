@@ -15,7 +15,7 @@ mutable struct ZeroCurve{DC <: DayCount, P<: Interpolation, B<: BusinessCalendar
 end
 
 function ZeroCurve(dates::Vector{Date}, rates::Vector{Float64}, 
-    dc::DC, interpolator::P) where {DC <: DayCount, P <: Interpolation}
+    dc::DC = JsQL.Time.Act365(), interpolator::P = JsQL.Math.LinearInterpolation()) where {DC <: DayCount, P <: Interpolation}
 
     zc = ZeroCurve{DC, P, NullCalendar}(0, dates[1], dc, interpolator, 
                                         NullCalendar(), dates, zeros(length(dates)), 
@@ -31,7 +31,11 @@ function initialize!(zc::ZeroCurve)
     @simd for i = 2:length(zc.dates)
         @inbounds zc.times[i] = year_fraction(zc.dc, zc.dates[1], zc.dates[i])
     end
-    zc.discounts = exp.( - zc.times .* zc.rates)
+    rt = zc.rates #for extrapolation
+    if length(rt) == length(zc.times) - 1 
+        rt = [0.0, rt...]
+    end
+    zc.discounts = exp.( - zc.times .* rt)
     # initialize interpolator
     Math.initialize!(zc.interp, zc.times, zc.discounts)
 

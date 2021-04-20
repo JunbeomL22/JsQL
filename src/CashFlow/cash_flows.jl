@@ -14,7 +14,7 @@ end
 
 function CouponMixin(fixingDate::Date, calcStartDate::Date, calcEndDate::Date, 
                     paymentDate::Date, dc::DC) where {DC <: DayCount}
-    accrual = year_fraction(dc, calcStartDate, calcEndDate + Da(1))
+    accrual = year_fraction(dc, calcStartDate, calcEndDate + Day(1))
     return CouponMixin{DC}(fixingDate, calcStartDate, calcEndDate, paymentDate, dc, accrual)
 end
 
@@ -22,6 +22,7 @@ fixing_date(coup::Coupon) = coup.couponMixin.fixingDate
 calc_start_date(coup::Coupon) = coup.couponMixin.calcStartDate
 calc_end_date(coup::Coupon) = coup.couponMixin.calcEndDate
 date(coup::Coupon) = coup.couponMixin.paymentDate
+payment_date(coup::Coupon) = coup.couponMixin.paymentDate
 get_dc(coup::Coupon) = coup.couponMixin.dc
 accrual(coup::Coupon) = coup.couponMixin.accrual
 
@@ -57,32 +58,71 @@ get_payment_dates(coups::Vector{C}) where {C <: Coupon} = Date[payment_date(coup
 get_fixing_dates(coups::Vector{C}) where {C <: Coupon} = Date[fixing_date(coup) for coup in coups]
 
 ## NPV Method ##
-function _npv_reduce(coup::Coupon, yts::YieldTermStructure, settlement_date::Date)
-    if has_occurred has_occurred(coup, settlement_date)
+function _npv_reduce(coup::Coupon, yts::YieldTermStructure, npv_date::Date)
+    if has_occurred(coup, npv_date)
         return 0.0
     end
-    return amount(coup) * discount(yts, payment_date(coup))
+    return amount(coup) * discount(yts, date(coup))
 end
 
-function npv(leg::Leg, yts::YieldTermStructure, settlement_date::Date, npv_date::Date)
-    totalNPV = mapreduce(x -> _npv_reduce(x, yts, settlement_date), +, leg, init=0.0)
+function npv(leg::Leg, yts::YieldTermStructure, npv_date::Date)
+    totalNPV = mapreduce(x -> _npv_reduce(x, yts, npv_date), +, leg, init=0.0)
     
     if leg.redemption != nothing
-        totalNPV += amount(leg.redemption) * discount(yts, date(leg.redemption))
+        totalNPV += amount(leg.redemption) * discount(yts, npv_date, date(leg.redemption))
     end
-    return totalNPV / discount(yts, npv_date)
+    return totalNPV 
 end
 
 # basically in npv, cash_flow in calcDate is  considered
 # clean npv should also be provided
-function has_occurred(cf::CashFlow, ref_date::Date, include_settlement_cf::Bool = false)
+function has_occurred(cf::CashFlow, ref_date::Date, include_settlement::Bool = true)
     # will need to expand this
-    if ref_date < date(cf) || (ref_date == date(cf) && include_settlement_cf)
+    if ref_date < date(cf) || (ref_date == date(cf) && include_settlement)
         return false
     else
         return true
     end
 end
+
+function accrued_amount(leg::L, settlement::Date) where {L <: Leg}
+    idx = 1
+    while settlement > leg.coupons[idx].couponMixin.paymentDate
+        idx += 1
+    end
+    return accrued_amount(leg.coupons[idx], settlement)
+end 
+
+function accrued_amount(coup::Coupon, settlement_date::Date)
+    if settlement_date <= calc_start_date(coup) || settlement_date > coup.paymentDate
+        return 0.0
+    end
+  
+    return coup.nominal *
+        (compound_factor(coup.rate, 
+                        calc_start_date(coup), 
+                        min(settlement_date, calc_end_date(coup))) 
+                            - 1.0)
+end
+
+function duration(coup::Coupon, yts::YieldTermStructure, npv_date::Date)
+    if has_occurred(coup, npv_date)
+        return 0.0
+    end
+    t = year_fraction(coup.couponMixin.dc, npv_date, coup.couponMixin.paymentDate)
+    return amount(coup) * discount(yts, payment_date(coup)) * t
+end
+
+function duration(leg::Leg, yts::YieldTermStructure, npv_date::Date)
+    _duration = mapreduce(x -> duration(x, yts, npv_date), +, leg, init=0.0)
+    
+    if leg.redemption != nothing
+        t = year_fraction(npv_date, leg.redemption.date)
+        _duration += amount(leg.redemption) * discount(yts, date(leg.redemption)) * t
+    end
+    return _duration
+end
+
 
 function Base.iterate(f::Leg, state=1)
     if length(f.coupons) == state - 1

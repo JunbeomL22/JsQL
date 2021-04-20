@@ -6,12 +6,12 @@ end
 
 struct BondMixin
     fixingDays::Int
-    settlementDays::Int
+    paymentDays::Int # coupons
     issueDate::Date
     maturity::Date
 end
 
-get_settlement_date(bond::Bond) = bond.bondMixin.settlementDays
+get_payment_date(bond::Bond) = bond.bondMixin.paymentDays
 
 mutable struct BondResults 
     dirtyPrice::Float64
@@ -19,29 +19,32 @@ mutable struct BondResults
     dv01::Float64
     duration::Float64
     modifiedDuration::Float64
+    theta::Float64
+    realizedPL::Float64
     tenors::Vector{Period}
     delta::Vector{Float64}
     gamma::Vector{Float64}
 end
 
 function BondResults()
-    return BondResults(0.0, 0.0, 0.0, 0.0, 0.0, Period[], Float64[], Float64[])    
+    return BondResults(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Period[], Float64[], Float64[])    
 end
 
-mutable struct FixedRateBond{DC <: DayCount, P <: PricingEngine, C <:CompoundingType, F <: Frequency} <: Bond
+mutable struct FixedCouponBond{DC <: DayCount, P <: PricingEngine, C <:CompoundingType, F <: Frequency, IR <: InterestRate} <: Bond
     lazyMixin::LazyMixin
     bondMixin::BondMixin
+    
     faceAmount::Float64
     schedule::Schedule
     cashflows::FixedRateLeg{FixedRateCoupon{DC, InterestRate{DC, C, F}}}
     dc::DC
 
-    ytm::Float64
+    ytm::IR
     pricingEngine::P
     results::BondResults
 end
 
-function FixedRateBond(settlementDays::Int, 
+function FixedCouponBond(paymentDays::Int, 
                         faceAmount::Float64, schedule::Schedule,
                         coup_rate::Float64, dc::DC, paymentConvention::B,
                         issueDate::Date, calendar::C, pricingEngine::P,
@@ -49,38 +52,56 @@ function FixedRateBond(settlementDays::Int,
                                                     C <: BusinessCalendar, P <: PricingEngine}
     maturity = schedule.dates[end]
     coups = FixedRateLeg(schedule, faceAmount, coup_rate, calendar, 
-                        0, settlementDays, Unadjusted(), paymentConvention,
+                        0, paymentDays, Unadjusted(), paymentConvention,
                         dc; add_redemption=true)
-    return FixedRateBond{DC, P, SimpleCompounding, typeof(schedule.tenor.freq)}(LazyMixin(), 
-                                                                                BondMixin(0, settlementDays, issueDate, maturity),
-                                                                                faceAmount,
-                                                                                schedule,
-                                                                                coups,
-                                                                                dc,
-                                                                                ytm,
-                                                                                pricingEngine,
-                                                                                BondResults())
+    ytm_ir = InterestRate(ytm)
+
+    return FixedCouponBond{DC, P, SimpleCompounding, typeof(schedule.tenor.freq), typeof(ytm_ir)}(LazyMixin(), 
+                                                                                                BondMixin(0, paymentDays, issueDate, maturity),
+                                                                                                faceAmount,
+                                                                                                schedule,
+                                                                                                coups,
+                                                                                                dc,
+                                                                                                ytm_ir,
+                                                                                                pricingEngine,
+                                                                                                BondResults())
 end
                                                                     
-mutable struct ZeroCouponBond{BC <: BusinessCalendar, P <: PricingEngine} <: Bond
+mutable struct ZeroCouponBond{BC <: BusinessCalendar, P <: PricingEngine, IR <: InterestRate} <: Bond
     lazyMixin::LazyMixin
     bondMixin::BondMixin
     faceAmount::Float64
+    paymentDate::Date
     calendar::BC
-    ytm::Float64
+    ytm::IR
     pricingEngine::P
     results::BondResults
 end
 
-function ZeroCouponBond(settlementDays::Int, calendar::B,
+function ZeroCouponBond(paymentDays::Int, calendar::B,
                         faceAmount::Float64, maturity::Date, paymentConvention::C = Following(),
                         issueDate::Date = Date(0),
                         ytm::Float64 = -Inf, 
                         pe::P = DiscountBondEngine()) where {B <: BusinessCalendar, C <: BusinessDayConvention, P <: PricingEngine}
     #BoB
     cf = ZeroCouponLeg(SimpleCashFlow(faceAmount, maturity))
-    return ZeroCouponBond{B, P}(LazyMixin(), BondMixin(0, settlementDays, issueDate, maturity),
-                                faceAmount, calendar, ytm, pe, BondResults())
+    paymentDate = adjust(calendar, maturity, paymentConvention)
+    ytm_ir = InterestRate(ytm)
+    return ZeroCouponBond{B, P}(LazyMixin(), BondMixin(0, paymentDays, issueDate, maturity),
+                                faceAmount, paymentDate, calendar, ytm_ir, pe, BondResults())
 end
 
+get_maturity(b::Bond) = b.bondMixin.maturity
+get_frequency(b::Bond) = b.schedule.tenor.freq
+
+function notional(bond::Bond, d::Date)
+    if d > get_maturity(bond)  
+        return 0.0
+    else
+        return bond.faceAmount
+    end
+end
+
+accrued_amount(bond::Bond, settlement::Date) = accrued_amount(bond.cashflows, settlement)
+get_redemption(b::Bond) = b.cashflows.redemption == nothing ? b.cashflows.coupons[end] : b.cashflows.redemption
 

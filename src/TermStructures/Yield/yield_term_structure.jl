@@ -17,6 +17,8 @@ discount(yts::NullYieldTermStructure, ::Float64) = 1.0
 
 discount(yts::YieldTermStructure, date::Date) = discount(yts, time_from_reference(yts, date))
 
+discount(yts::YieldTermStructure, d1::Date, d2::Date) = discount(yts, time_from_reference(yts, d2)) / discount(yts, time_from_reference(yts, d1))
+
 function discount(yts::YieldTermStructure, time_frac::Float64)
   disc = discount_impl(yts, time_frac)
   if isdefined(yts, :jumpTimes)
@@ -39,7 +41,7 @@ function discount(yts::YieldTermStructure, time_frac::Float64)
   end
 end
 
-function zero_rate(yts::YieldTermStructure, date::Date, dc::DayCount, comp::CompoundingType, freq::Frequency = Annual())
+function zero_rate(yts::YieldTermStructure, date::Date, dc::DayCount, comp::CompoundingType=ContinuousCompounding(), freq::Frequency = Annual())
   if date == yts.referenceDate
       return implied_rate(1.0 / discount(yts, 0.0001), dc, comp, 0.0001, freq)
   else
@@ -47,12 +49,12 @@ function zero_rate(yts::YieldTermStructure, date::Date, dc::DayCount, comp::Comp
   end
 end
 
-function zero_rate(yts::YieldTermStructure, time_frac::Float64, comp::CompoundingType, freq::Frequency = Annual())
+function zero_rate(yts::YieldTermStructure, time_frac::Float64, comp::CompoundingType = ContinuousCompounding(), freq::Frequency = Annual())
   t = time_frac == 0.0 ? 0.0001 : time_frac
   return implied_rate(1.0 / discount(yts, t), yts.dc, comp, t, freq)
 end
 
-function forward_rate(yts::YieldTermStructure, date1::Date, date2::Date, dc::DayCount, comp::CompoundingType, freq::Frequency = Annual())
+function forward_rate(yts::YieldTermStructure, date1::Date, date2::Date, dc::DayCount, comp::CompoundingType = SimpleCompounding(), freq::Frequency = Annual())
   if date1 == date2
     t1 = max(time_from_reference(yts, date1) - 0.0001 / 2.0, 0.0)
     t2 = t1 + 0.0001
@@ -64,9 +66,9 @@ function forward_rate(yts::YieldTermStructure, date1::Date, date2::Date, dc::Day
   end
 end
 
-forward_rate(yts::YieldTermStructure, date::Date, period::Integer, dc::DayCount, comp::CompoundingType, freq::Frequency = Annual()) = forward_rate(yts, date, date + Dates.Day(period), dc, comp, freq)
+forward_rate(yts::YieldTermStructure, date::Date, period::Integer, dc::DayCount, comp::CompoundingType = SimpleCompounding(), freq::Frequency = Annual()) = forward_rate(yts, date, date + Dates.Day(period), dc, comp, freq)
 
-function forward_rate(yts::YieldTermStructure, time1::Float64, time2::Float64, comp::CompoundingType, freq::Frequency = Annual())
+function forward_rate(yts::YieldTermStructure, time1::Float64, time2::Float64, comp::CompoundingType = SimpleCompounding(), freq::Frequency = Annual())
   if time1 == time2
     t1 = max(time1 - 0.0001 / 2.0, 0.0)
     t2 = t1 + 0.0001
@@ -109,10 +111,10 @@ FlatForwardTermStructure(settlementDays::Int, calendar::BusinessCalendar, forwar
                         FlatForwardTermStructure(settlementDays, Date(0), calendar, forward, dc, comp, freq)
 
 FlatForwardTermStructure(referenceDate::Date, forward::Float64, dc::DayCount) =
-                        FlatForwardTermStructure(0, referenceDate, TargetCalendar(), Quote(forward), dc, ContinuousCompounding(), Annual())
+                        FlatForwardTermStructure(0, referenceDate, JsQL.Time.TargetCalendar(), Quote(forward), dc, ContinuousCompounding(), Annual())
 
 FlatForwardTermStructure(referenceDate::Date, forward::Float64, dc::DayCount, compounding::CompoundingType, freq::Frequency) =
-                        FlatForwardTermStructure(0, referenceDate, TargetCalendar(), Quote(forward), dc, compounding, freq)
+                        FlatForwardTermStructure(0, referenceDate, JsQL.Time.TargetCalendar(), Quote(forward), dc, compounding, freq)
 
 discount_impl(ffts::FlatForwardTermStructure, time_frac::Float64) = discount_factor(ffts.rate, time_frac)
 

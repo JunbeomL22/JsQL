@@ -23,40 +23,38 @@ struct DateGenerationBackwards <: DateGenerationRule end
 struct DateGenerationForwards <: DateGenerationRule end
 struct DateGenerationTwentieth <: DateGenerationRule end
 
-struct Schedule{B <: BusinessDayConvention, B1 <: BusinessDayConvention,
-                D <:DateGenerationRule, C <:BusinessCalendar}
+struct Schedule{B <: BusinessDayConvention, D <:DateGenerationRule, C <:BusinessCalendar}
     # BOB (the beginning of the body. will be used this later too)
     effectiveDate::Date # start date
     terminationDate::Date
     tenor::TenorPeriod
     convention::B # used in date generation
-    termDateConvention::B1 # ?
     rule::D
     endOfMonth::Bool
     dates::Vector{Date}
     cal::C
 end
+
 function Schedule(effectiveDate::Date, terminationDate::Date,
-                            tenor::TenorPeriod, convention::B, termDateConvention::B1, 
+                            tenor::TenorPeriod, convention::B,
                             rule::D, endOfMonth::Bool, dates::Vector{Date}, 
                             cal::C = TargetCalendar()) where
-                            {B <: BusinessDayConvention, B1 <: BusinessDayConvention,
-                            D <:DateGenerationRule, C <:BusinessCalendar}
+                            {B <: BusinessDayConvention, D <:DateGenerationRule, C <:BusinessCalendar}
     # BOB 
     if !isempty(dates)
         dates[end] = adjust(cal, termDateConvention, dates[end])
     end
     return Schedule(effectiveDate, terminationDate, tenor, convention, 
-                    termDateConvention, rule, endOfMonth, dates, cal)
+                    rule, endOfMonth, dates, cal)
 end
 
 """
 constructor of forward DateGenerationBackward
 """
 function Schedule(effectiveDate::Date, terminationDate::Date, tenor::TenorPeriod, 
-                convention::B, termDateConvention::B1, rule::DateGenerationForwards, 
-                endOfMonth::Bool, cal::C = SouthKoreaSettlementCalendar()) where 
-                {B <: BusinessDayConvention, B1 <: BusinessDayConvention, C <: BusinessCalendar}
+                convention::B, rule::DateGenerationForwards, 
+                endOfMonth::Bool=false, cal::C = SouthKoreaSettlementCalendar()) where 
+                {B <: BusinessDayConvention, C <: BusinessCalendar}
     # BOB
     dates = Vector{Date}()
     dt = effectiveDate
@@ -70,17 +68,14 @@ function Schedule(effectiveDate::Date, terminationDate::Date, tenor::TenorPeriod
     if dates[end] != terminationDate
        push!(dates, terminationDate) 
     end
-    return Schedule{B, B1, DateGenerationForwards, C}(effectiveDate, terminationDate, 
-                                                    tenor, convention, termDateConvention, 
-                                                    rule, endOfMonth, dates, cal)
+    return Schedule{B, DateGenerationForwards, C}(effectiveDate, terminationDate, 
+                                                    tenor, convention, rule, endOfMonth, dates, cal)
 end
 
 function Schedule(effectiveDate::Date, terminationDate::Date,
-                tenor::TenorPeriod, convention::B, termDateConvention::B1,
-                rule::DateGenerationBackwards, endOfMonth::Bool,
-                cal::C = SouthKoreaSettlementCalendar()) where 
-                    {B <: BusinessDayConvention, B1 <: BusinessDayConvention, 
-                    C <: BusinessCalendar}
+                tenor::TenorPeriod, convention::B, 
+                rule::DateGenerationBackwards, endOfMonth::Bool=false,
+                cal::C = SouthKoreaSettlementCalendar()) where {B <: BusinessDayConvention, C <: BusinessCalendar}
     size = get_size(tenor.period, effectiveDate, terminationDate) # get_size is defined later
     dates = Vector{Date}(undef, size)
     dates[1] = effectiveDate
@@ -90,15 +85,14 @@ function Schedule(effectiveDate::Date, terminationDate::Date,
         @inbounds dates[i] = adjust(cal, convention, terminationDate - period * tenor.period)
         period +=1
     end
-    return Schedule{B, B1, DateGenerationBackwards, C}(effectiveDate, terminationDate, tenor, 
-                                                        convention, termDateConvention, rule, 
-                                                        endOfMonth, dates, cal)
+    return Schedule{B, DateGenerationBackwards, C}(effectiveDate, terminationDate, tenor, 
+                                                        convention, rule, endOfMonth, dates, cal)
 end
 
 function Schedule(effectiveDate::Date, terminationDate::Date, tenor::TenorPeriod,
-                convention::B, termDateConvention::B1, rule::DateGenerationTwentieth,
+                convention::B, rule::DateGenerationTwentieth,
                 endOfMonth::Bool, cal::C = SouthKoreaSettlementCalendar()) where 
-                {B <: BusinessDayConvention, B1 <: BusinessDayConvention, C <: BusinessCalendar}
+                {B <: BusinessDayConvention, C <: BusinessCalendar}
     dates = Vector{Date}()
     dt = effectiveDate
     push!(dates, adjust(cal, convention, dt))
@@ -124,8 +118,8 @@ function Schedule(effectiveDate::Date, terminationDate::Date, tenor::TenorPeriod
         push!(dates, terminationDate)
     end
 
-    return Schedule{B, B1, DateGenerationTwentieth, C}(effectiveDate, terminationDate, 
-                                                tenor, convention, termDateConvention, rule, 
+    return Schedule{B, DateGenerationTwentieth, C}(effectiveDate, terminationDate, 
+                                                tenor, convention, rule, 
                                                 endOfMonth, dates, cal)
 end
 

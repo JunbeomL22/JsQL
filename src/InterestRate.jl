@@ -12,6 +12,8 @@ struct InterestRate{DC <: DayCount, C <: CompoundingType, F <: Frequency}
     freq::F
 end
 
+InterestRate(ytm::Float64) = InterestRate(ytm, JsQL.Time.Act365(), ContinuousCompounding(), NoFrequency())
+
 discount_factor(ir::InterestRate, time_frac::Float64) = 1.0 / compound_factor(ir, time_frac)
 function discount_factor(ir::InterestRate, d1::Date, d2::Date, ::Date, ::Date) 
     t = year_fraction(ir.dc, d1, d2)
@@ -20,7 +22,7 @@ end
 
 function compound_factor(ir::InterestRate, time_frac::Float64)
     time_frac < 0.0 && error("negative time is not allowed")
-    return _compound_factor(ir.comp, ir.rate, time_frac, ir_freq)
+    return _compound_factor(ir.comp, ir.rate, time_frac, ir.freq)
 end
 
 _compound_factor(::SimpleCompounding, rate::Float64, time_frac::Float64, ::Frequency)     = 1.0 + rate*time_frac
