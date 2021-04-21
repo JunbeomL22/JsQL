@@ -12,12 +12,12 @@ days_per_year(::Union{Act360, Thirty360}) = 360.0
 days_per_year(::Act365) = 365.0
 
 function day_count(::DayCount, st::Date, ed::Date)
-    ed < st && error("day_count error (act): end date is before the start date.")
+    ed < st && error("day_count error (act): end date is before the start date {Refer to st = $(st), ed = $(ed)}")
     return Dates.value(ed-st)
 end
 
 function day_count(::BondThirty360, st::Date, ed::Date)
-    ed < st && error("day_count error (bond30): end date is before the start date.")
+    ed < st && error("day_count error (bond30): end date is before the start date {Refer to st = $(st), ed = $(ed)}")
     d1 = day(st)
     d2 = day(ed)
 

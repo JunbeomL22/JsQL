@@ -167,6 +167,19 @@ function adjustweekendholidayUS(dt::Date)
 	return dt
 end
 
+function adjustweekendholidayUK(dt::Date)
+
+    if dayofweek(dt) == 6
+        return dt + Day(2)
+    end
+  
+    if dayofweek(dt) == 7
+        return dt + Day(1)
+    end
+  
+    return dt
+end
+
 is_holiday(joint::JointCalendar, dt::Date) = is_holiday(joint.cal1, dt) || is_holiday(joint.cal2, dt)
 
 function is_holiday(::TargetCalendar, dt::Date)

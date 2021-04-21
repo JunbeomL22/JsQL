@@ -53,7 +53,8 @@ function FixedCouponBond(paymentDays::Int, faceAmount::Float64,
                         paymentConvention::B = Following(),
                         pricingEngine::P = DiscountingBondEngine(),
                         add_redemption::Bool=true,
-                        ytm::Float64 = -Inf)
+                        ytm::Float64 = -Inf) where {DC <: DayCount, B <: BusinessDayConvention,
+                                                    C <: BusinessCalendar, P <: PricingEngine}
     # BoB
     tp = TenorPeriod(couponFreq)
 
