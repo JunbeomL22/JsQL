@@ -69,7 +69,7 @@ AbstractCurrency, NullCurrency, Currency
 
 export # indices.jl
 IborIndex, LiborIndex, fixing_date, maturity_date, fixing, forcast_fixing, euribor_index,
-usd_libor_index, is_valied_fixing_date, add_fixing!
+usd_libor_index, is_valied_fixing_date, add_fixing!, value_date, fixing
 
 export # cash_flows/cash_flows.jl
 CouponMixin, accrual_start_date, accrual_end_date, ref_period_start, 
@@ -78,8 +78,8 @@ ref_period_end, SimpleCashFlow, Leg, ZeroCouponLeg, npv
 export # cash_flows/fixed_rate_coupon.jl
 FixedRateCoupon, FixedRateLeg
 
-export # cash_flows/floating_rate_coupon.jl
-FloatingCoupon, FloatingLeg, update_pricer!
+#export # cash_flows/floating_rate_coupon.jl
+#FloatingCoupon, FloatingLeg, update_pricer!
 
 export # least_square
 Monomial, MonomialFunction, path_basis_system!, get_type
@@ -152,7 +152,7 @@ include("Index/indices.jl")
 # Cash Flows ------------------------------------
 include("CashFlow/cash_flows.jl")
 include("CashFlow/fixed_rate_coupon.jl")
-include("CashFlow/floating_rate_coupon.jl")
+#include("CashFlow/floating_rate_coupon.jl")
 # Method ----------------------------------------
 include("Method/MonteCarlo/lsm_basis_system.jl")
 # Process ---------------------------------------

@@ -13,29 +13,37 @@ Examples:
     is not the last business day of the month!
 =#
 
+# If it is 6M libor paied in quaterly basis, (fixing, payment) = (6M, 3M)
+# In case of OIS paid in semiannnual basis, (fixing, payment) = (1D, 6M)
+# The case that fixingPeriod < paymentPeriod:
+# Libor => (1+r*tau) ; OIS => (1+r*tau) * ...* (1+r*tau)
 struct IborIndex{TP<: TenorPeriod, CUR <: AbstractCurrency, B <: BusinessCalendar,
                     C <: BusinessDayConvention, DC <: DayCount, T <: TermStructure} <: InterestRateIndex
     #
     familyName::String
-    paymentPeiord::TP # TenorPeriod(Quaterly()) if it is 3M Libor or Quaterly paied OIS
-    fixingDays::Int
+    #
+    fixingPeriod::TP
+    paymentPeiord::TP 
+    #
+    fixingDays::Int # Normally Day(1)
     currency::CUR
     fixingCalendar::B
     convention::C
     endOfMonth::Bool
     dc::DC
-    ts::TermStructure
+    yts::TermStructure
     pastFixings::Dict{Date, Float64}
 end
 
-function IbotIndex(familyName::String, tenor::TP, fixingDays::Int, currency::CUR, 
+function IborIndex(familyName::String, fixingPeriod::TP, paymentPeriod::TP, fixingDays::Int, currency::CUR, 
                     fixingCalendar::B, convention::C, endOfMonth::Bool, dc::DC, 
                     ts::T = NullTermStructure(), pastFixings = Dict{Date, Float64}()
                     ) where {TP <: TenorPeriod, CUR <: AbstractCurrency, 
-                            B <: BusinessCalendar, C <: BusinessDayConvention, DC <: DayCount, T <: TermStructure} 
-                      # equal to 
-    IborIndex{TP, CUR, B, C, DC, T}(familyName, tenor, fixingDays, currency, 
-                                fixingCalendar, convention, endOfMonth, dc, ts, pastFixings)
+                            B <: BusinessCalendar, C <: BusinessDayConvention, 
+                            DC <: DayCount, T <: TermStructure} 
+    # equal to 
+    return IborIndex{TP, CUR, B, C, DC, T}(familyName, fixingPeriod, paymentPeriod, fixingDays, currency, 
+                                            fixingCalendar, convention, endOfMonth, dc, ts, pastFixings)
 end
 """
 For Libor, \n
@@ -46,40 +54,50 @@ For Libor, \n
 struct LiborIndex{TP<: TenorPeriod, B <: BusinessCalendar,
                     C <: BusinessDayConvention, DC <: DayCount, T <: TermStructure} <: InterestRateIndex
     familyName::String
-    tenor::TP
+    fixingPeriod::TP
+    paymentPeriod::TP
     fixingDays::Int
     currency::Currency
     fixingCalendar::B
     jointCalendar::JointCalendar
     dc::DC
-    ts::TermStructure
+    yts::TermStructure
     convention::C
     endOfMonth::Bool
     pastFixings::Dict{Date, Float64}
 end
 
-function LiborIndex(familyName::String, tenor::TP, fixingDays::Int, currency::Currency, fixingCalendar::B,
-                    jointCalendar::JointCalendar,  dc::DC, ts::T = NullTermStructure(), 
+function LiborIndex(familyName::String, fixingPeriod::TP, paymentPeriod::TP, fixingDays::Int, 
+                    currency::Currency, fixingCalendar::B, jointCalendar::JointCalendar,  
+                    dc::DC, ts::T = NullTermStructure(), 
                     convention::C = ModifiedFollowing(), endOfMonth::Bool = true, 
                     pastFixings = Dict{Date, Float64}()
                     ) where {TP <: TenorPeriod, B <: BusinessCalendar, C <: BusinessDayConvention, 
                             DC <: DayCount, T <: TermStructure}
     # equal to 
-    return LiborIndex{TP, B, C, DC, T}(familyName, tenor, fixingDays, currency, 
-                                    fixingCalendar, jointCalendar, dc, ts, 
-                                    convention, endOfMonth, pastFixings)
-
-function LiborIndex(familyName::String, tenor::TenorPeriod, fixingDays::Int, currency::Currency, 
-                    fixingCalendar::BusinessCalendar, dc::DayCount, yts::YieldTermStructure)
-    # beginning of the body
-    endofMonth = libor_eom(tenor.period)
-    conv = libor_conv(tenor.period)
-    jc = JointCalendar(JsQL.Time.UKLSECalendar(), fixingCalendar)
-
-    return LiborIndex{TP, B, C, DC, T}(familyName, tenor, fixingDays, currency, fixingCalendar, jc, dc, 
-                                        yts, conv, endofMonth, pastFixings)
+    return LiborIndex{TP, B, C, DC, T}(familyName, fixingPeriod, paymentPeriod, fixingDays, currency, 
+                                        fixingCalendar, jointCalendar, dc, ts, convention, endOfMonth, pastFixings)
 end
 
+function LiborIndex(familyName::String, fixingPeriod::TP, paymentPeriod::TP, fixingDays::Int, currency::Currency, 
+                    fixingCalendar::B, dc::DC, yts::T, pastFixings::Dict{Date, Float64} = Dict{Date, Float64}()
+                    ) where {TP <: TenorPeriod, B <: BusinessCalendar, 
+                            DC <: DayCount, T <: TermStructure}
+    # beginning of the body
+    endofMonth = libor_eom(paymentPeriod.period)
+    conv = libor_conv(paymentPeriod.period)
+    jc = JointCalendar(JsQL.Time.UKLSECalendar(), fixingCalendar)
+
+    return LiborIndex{TP, BusinessCalendar, BusinessDayConvention, DC, T}(familyName, fixingPeriod, paymentPeriod, fixingDays, currency, 
+                                                                                fixingCalendar, jc, dc, yts, conv, endofMonth, pastFixings)
+end
+
+function usd_libor_index(fixingPeriod::TenorPeriod, paymentPeriod::TenorPeriod, yts::YieldTermStructure, pastFixings::Dict{Date, Float64} = Dict{Date, Float64}())
+    return LiborIndex("USDLibor", fixingPeriod, paymentPeriod, 2, USDCurrency(), 
+                        JsQL.Time.USSettlementCalendar(), JsQL.Time.Act360(), yts, pastFixings)
+end
+  
+# fixing -> value -> maturity#
 """ 
 fixing_date(idx::InterestRateIndex, d::Date) \n
 It returns the fixing date from the value date (=d)
@@ -149,7 +167,7 @@ function value_date(idx::LiborIndex, d::Date)
 end
   
 function maturity_date(idx::LiborIndex, d::Date)
-    mat = advance(idx.tenor.period, idx.fixingCalendar, d)
+    mat = advance(idx.fixingPeriod, idx.fixingCalendar, d)
     if idx.endOfMonth && is_endofmonth(d)
         return lastdayofmonth(mat)
     else
@@ -157,14 +175,14 @@ function maturity_date(idx::LiborIndex, d::Date)
     end
 end
   
-euribor_conv(::Union{Dates.Day, Dates.Week}) = QuantLib.Time.Following()
-euribor_conv(::Union{Dates.Month, Dates.Year}) = QuantLib.Time.ModifiedFollowing()
+euribor_conv(::Union{Dates.Day, Dates.Week}) = JsQL.Time.Following()
+euribor_conv(::Union{Dates.Month, Dates.Year}) = JsQL.Time.ModifiedFollowing()
 
 euribor_eom(::Union{Dates.Day, Dates.Week}) = false
 euribor_eom(::Union{Dates.Month, Dates.Year}) = true
 
-libor_conv(::Union{Dates.Day, Dates.Week}) = QuantLib.Time.Following()
-libor_conv(::Union{Dates.Month, Dates.Year}) = QuantLib.Time.ModifiedFollowing()
+libor_conv(::Union{Dates.Day, Dates.Week}) = JsQL.Time.Following()
+libor_conv(::Union{Dates.Month, Dates.Year}) = JsQL.Time.ModifiedFollowing()
 
 libor_eom(::Union{Dates.Day, Dates.Week}) = false
 libor_eom(::Union{Dates.Month, Dates.Year}) = true
