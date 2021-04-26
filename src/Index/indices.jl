@@ -89,7 +89,7 @@ function LiborIndex(familyName::String, fixingPeriod::TP, paymentPeriod::TP, fix
     jc = JointCalendar(JsQL.Time.UKLSECalendar(), fixingCalendar)
 
     return LiborIndex{TP, BusinessCalendar, BusinessDayConvention, DC, T}(familyName, fixingPeriod, paymentPeriod, fixingDays, currency, 
-                                                                                fixingCalendar, jc, dc, yts, conv, endofMonth, pastFixings)
+                                                                        fixingCalendar, jc, dc, yts, conv, endofMonth, pastFixings)
 end
 
 function usd_libor_index(fixingPeriod::TenorPeriod, paymentPeriod::TenorPeriod, yts::YieldTermStructure, pastFixings::Dict{Date, Float64} = Dict{Date, Float64}())
@@ -105,10 +105,22 @@ It returns the fixing date from the value date (=d)
 fixing_date(idx::InterestRateIndex, d::Date) = advance(Dates.Day(-idx.fixingDays), idx.fixingCalendar, d)
 """ 
 maturity_date(idx::IborIndex, d::Date) \n
-It returs the end of the period from the value date(=d)
+It returs the end (fixing) of the period from the value date(=d)
 """
-function maturity_date(idx::IborIndex, d::Date) 
-    mat = advance(idx.tenor.period, idx.fixingCalendar, d)
+function maturity_date(idx::InterestRateIndex, d::Date) 
+    mat = advance(idx.fixingPeriod.period, idx.fixingCalendar, d)
+    if idx.endOfMonth && is_endofmonth(d)
+        return lastdayofmonth(mat)
+    else
+        return mat
+    end
+end
+""" 
+maturity_date(idx::IborIndex, d::Date) \n
+It returs the end (fixing) of the period from the value date(=d)
+"""
+function payment_date(idx::InterestRateIndex, d::Date) 
+    mat = advance(idx.paymentPeriod.period, idx.fixingCalendar, d)
     if idx.endOfMonth && is_endofmonth(d)
         return lastdayofmonth(mat)
     else
@@ -119,7 +131,16 @@ end
 value_date(idx::IborIndex, d::Date) \n
 returs the value date from the fixing date
 """
-value_date(idx::IborIndex, d::Date) = advance(Dates.Day(idx.fixingDays), idx.fixingCalendar, d)
+value_date(idx::InterestRateIndex, d::Date) = advance(Dates.Day(idx.fixingDays), idx.fixingCalendar, d)
+
+function fixing_amount(idx::InterestRateIndex, _fixing_date::Date, forcast_todays_fixing::Bool = true)
+    rate = fixing(idx, _fixing_date, idx.yts, forcast_todays_fixing)
+    pay  = payment_date(idx, d)
+    d1   = value_date(idx, _fixing_date)
+    d2   = maturity_date(idx, d1)
+    frac = year_fraction(idx.dc, d1, d2)
+    return rate * frac
+end
 
 function fixing(idx::InterestRateIndex,  _fixing_date::Date, 
                 ts::TermStructure = idx.ts, forcast_todays_fixing::Bool = true)
@@ -137,6 +158,10 @@ function fixing(idx::InterestRateIndex,  _fixing_date::Date,
         return pastFix
     end
     
+end
+
+function get_past_fixing(idx::Union{IborIndex, LiborIndex}, _fixing_date::Date, default_value::Float64 = -1.0)
+    return get(idx.pastFixings, _fixing_date, default_value)
 end
 
 function forcast_fixing(idx::InterestRateIndex, ts::TermStructure, _fixing_date::Date)
