@@ -1,4 +1,5 @@
 using Dates
+import Base.getindex, Base.length
 """
 The nearest future date of 20th of Mar, Jun, Sep, direction \n
 Necessary for CDS payment schedule
@@ -152,3 +153,6 @@ function get_size(p::Dates.Year, ed::Date, td::Date)
                         ))
     end
 end
+
+getindex(s::Schedule, i::Int) = s.dates[i]
+length(s::Schedule) = length(s.dates)

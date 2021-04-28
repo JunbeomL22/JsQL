@@ -17,6 +17,10 @@ Examples:
 # In case of OIS paid in semiannnual basis, (fixing, payment) = (1D, 6M)
 # The case that fixingPeriod < paymentPeriod:
 # Libor => (1+r*tau) ; OIS => (1+r*tau) * ...* (1+r*tau)
+
+# fixing Days refer to calc_start_date, e.g., in Libor case it is -2 days
+# i.e., value_date + fixingDays = fixing_date
+# i.e., end_date + paymentDays = maturity_date
 struct IborIndex{TP<: TenorPeriod, CUR <: AbstractCurrency, B <: BusinessCalendar,
                     C <: BusinessDayConvention, DC <: DayCount, T <: TermStructure} <: InterestRateIndex
     #
@@ -25,7 +29,7 @@ struct IborIndex{TP<: TenorPeriod, CUR <: AbstractCurrency, B <: BusinessCalenda
     fixingPeriod::TP
     paymentPeiord::TP 
     #
-    fixingDays::Int # Normally Day(1)
+    fixingDays::Int # Normally Day(2)
     currency::CUR
     fixingCalendar::B
     convention::C
@@ -51,7 +55,7 @@ For Libor, \n
 2) except EUR & GBP value date = two london business day + fixing date \n
 3) except GBP, ACT/360 applies \n
 """
-struct LiborIndex{TP<: TenorPeriod, B <: BusinessCalendar,
+mutable struct LiborIndex{TP<: TenorPeriod, B <: BusinessCalendar,
                     C <: BusinessDayConvention, DC <: DayCount, T <: TermStructure} <: InterestRateIndex
     familyName::String
     fixingPeriod::TP
@@ -93,7 +97,7 @@ function LiborIndex(familyName::String, fixingPeriod::TP, paymentPeriod::TP, fix
 end
 
 function usd_libor_index(fixingPeriod::TenorPeriod, paymentPeriod::TenorPeriod, yts::YieldTermStructure, pastFixings::Dict{Date, Float64} = Dict{Date, Float64}())
-    return LiborIndex("USDLibor", fixingPeriod, paymentPeriod, 2, USDCurrency(), 
+    return LiborIndex("USDLibor", fixingPeriod, paymentPeriod, -2, USDCurrency(), 
                         JsQL.Time.USSettlementCalendar(), JsQL.Time.Act360(), yts, pastFixings)
 end
   
@@ -102,7 +106,7 @@ end
 fixing_date(idx::InterestRateIndex, d::Date) \n
 It returns the fixing date from the value date (=d)
 """
-fixing_date(idx::InterestRateIndex, d::Date) = advance(Dates.Day(-idx.fixingDays), idx.fixingCalendar, d)
+fixing_date(idx::InterestRateIndex, d::Date) = advance(Dates.Day(idx.fixingDays), idx.fixingCalendar, d)
 """ 
 maturity_date(idx::IborIndex, d::Date) \n
 It returs the end (fixing) of the period from the value date(=d)
@@ -131,7 +135,7 @@ end
 value_date(idx::IborIndex, d::Date) \n
 returs the value date from the fixing date
 """
-value_date(idx::InterestRateIndex, d::Date) = advance(Dates.Day(idx.fixingDays), idx.fixingCalendar, d)
+value_date(idx::InterestRateIndex, d::Date) = advance(Dates.Day(-idx.fixingDays), idx.fixingCalendar, d)
 
 function fixing_amount(idx::InterestRateIndex, _fixing_date::Date, forcast_todays_fixing::Bool = true)
     rate = fixing(idx, _fixing_date, idx.yts, forcast_todays_fixing)
@@ -160,10 +164,6 @@ function fixing(idx::InterestRateIndex,  _fixing_date::Date,
     
 end
 
-function get_past_fixing(idx::Union{IborIndex, LiborIndex}, _fixing_date::Date, default_value::Float64 = -1.0)
-    return get(idx.pastFixings, _fixing_date, default_value)
-end
-
 function forcast_fixing(idx::InterestRateIndex, ts::TermStructure, _fixing_date::Date)
     d1 = value_date(idx, _fixing_date)
     d2 = maturity_date(idx, d1)
@@ -187,7 +187,7 @@ end
 
 # Libor methods
 function value_date(idx::LiborIndex, d::Date)
-    new_d = advance(Dates.Day(idx.fixingDays), idx.fixingCalendar, d, idx.convention)
+    new_d = advance(Dates.Day(-idx.fixingDays), idx.fixingCalendar, d, idx.convention)
     return adjust(idx.jointCalendar, idx.convention, new_d)
 end
   

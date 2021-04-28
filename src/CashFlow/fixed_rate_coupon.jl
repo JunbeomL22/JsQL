@@ -58,7 +58,7 @@ function FixedRateLeg(schedule::Schedule, faceAmount::Float64, rates::Vector{Flo
     start_date  = schedule.dates[1] # to be moved in generating coupons
     end_date    = schedule.dates[2]
     payment_date= adjust(calendar, paymentConvention, end_date + Day(paymentDays))
-    fixing_date = adjust(calendar, fixingConvention, start_date - Day(fixingDays))
+    fixing_date = adjust(calendar, fixingConvention, start_date+ Day(fixingDays))
 
     coups[1] = FixedRateCoupon(fixing_date, start_date, end_date, payment_date,
                                 faceAmount,InterestRate(rates[1], dc, SimpleCompounding(), schedule.tenor.freq),
@@ -66,8 +66,8 @@ function FixedRateLeg(schedule::Schedule, faceAmount::Float64, rates::Vector{Flo
     count = 2
     start_date = end_date
     end_date = count == length(schedule.dates) ? schedule.dates[end] : schedule.dates[count + 1]
-    fixing_date  = adjust(calendar, paymentConvention, end_date - Day(fixingDays))
-    payment_date = adjust(calendar, fixingConvention, start_date + Day(paymentDays))
+    fixing_date  = adjust(calendar, paymentConvention, start_date+ Day(fixingDays))
+    payment_date = adjust(calendar, fixingConvention,  end_date  + Day(paymentDays))
 
     while start_date < schedule.dates[end]
         @inbounds coups[count] = FixedRateCoupon(fixing_date, start_date, end_date, payment_date,
@@ -76,7 +76,7 @@ function FixedRateLeg(schedule::Schedule, faceAmount::Float64, rates::Vector{Flo
         count += 1
         start_date = end_date
         end_date = count == length(schedule.dates) ? schedule.dates[end] : schedule.dates[count + 1]
-        fixing_date = adjust(calendar, paymentConvention, end_date - Day(fixingDays))
+        fixing_date  = adjust(calendar, paymentConvention, start_date + Day(fixingDays))
         payment_date = adjust(calendar, paymentConvention, end_date + Day(paymentDays))
     end
 

@@ -12,7 +12,7 @@ export bp, ε
 
 export # abstract_type.jl
 LazyObject, Instrument, Swap, SwapType, Bond, Results, AbstractPayoff,
-PositionType, AbstractCurrency,
+PositionType, AbstractCurrency, 
 #
 CompoundingType, TermStructure, YieldTermStructure, CreditTermStructure, ConvenienceTermStructure,
 VolatilityTermStructure, OptionletVolatilityStructure, SwaptionVolatilityStructure,
@@ -68,8 +68,8 @@ export #currencies.jl
 AbstractCurrency, NullCurrency, Currency
 
 export # indices.jl
-IborIndex, LiborIndex, fixing_date, maturity_date, fixing, forcast_fixing, euribor_index,
-usd_libor_index, is_valied_fixing_date, add_fixing!, value_date, fixing
+OvernightIndex, IborIndex, LiborIndex, fixing_date, maturity_date, fixing, forcast_fixing, euribor_index,
+usd_libor_index, is_valied_fixing_date, add_fixing!, value_date, fixing, InterestRateIndex, OvernightIndex
 
 export # cash_flows/cash_flows.jl
 CouponMixin, accrual_start_date, accrual_end_date, ref_period_start, 
@@ -149,6 +149,7 @@ include("TermStructures/Volatility/svi_utils.jl")
 include("TermStructures/Volatility/black_vol_term_structure.jl")
 # index -----------------------------------------
 include("Index/indices.jl")
+include("Index/overnight_index.jl")
 # Cash Flows ------------------------------------
 include("CashFlow/cash_flows.jl")
 include("CashFlow/fixed_rate_coupon.jl")
