@@ -17,26 +17,34 @@ struct BlackScholes{Y1 <: YieldTermStructure, Y2 <: YieldTermStructure,
     dividendAmounts::Vector{Float64} # The values are like 30, 40, etc when x0.value is like 4000
     
     blackScholesType::BST
+    refPrice::Float64 
+    initialValue::Float64# els reference price
 end
 
 function BlackScholes(x0::Quote, riskFreeRate::Y1, dividendYield::Y2, 
                         blackVolatility::BlackConstantVol, 
-                        disc::D = EulerDiscretization()) where {Y1 <: YieldTermStructure, Y2 <: YieldTermStructure, D <: AbstractDiscretization}
+                        disc::D = EulerDiscretization(),
+                        refPrice::Float64) where {Y1 <: YieldTermStructure, Y2 <: YieldTermStructure, D <: AbstractDiscretization}
     # BoB                            
     localVolatility = LocalConstantVol(blackVolatility.referenceDate, black_vol(blackVolatility, 0.0, x0.value), blackVolatility.dc)
 
     return BlackScholes{Y1, Y2, BlackConstantVol, LocalConstantVol, D, GeneralBlackScholesType}(x0, riskFreeRate, dividendYield, 
                         blackVolatility, localVolatility, disc, 
                         Date[], Float64[], Float64[], 
-                        GeneralBlackScholesType())
+                        GeneralBlackScholesType(),
+                        refPrice,
+                        x0.value/refPrice)
 end
 
 function BsmProcess(x0::Quote, riskFreeRate::Y1, dividendYield::Y2,
-    blackVolatility::BlackConstantVol, disc::D = EulerDiscretization()) where {Y1 <: YieldTermStructure, Y2 <: YieldTermStructure, D <: AbstractDiscretization}
+                    blackVolatility::BlackConstantVol, 
+                    disc::D = EulerDiscretization(),
+                    refPrice::Float64) where {Y1 <: YieldTermStructure, Y2 <: YieldTermStructure, D <: AbstractDiscretization}
     localVolatility = LocalConstantVol(blackVolatility.referenceDate, black_vol(blackVolatility, 0.0, x0.value), blackVolatility.dc)
 
     return BlackScholes{Y1, Y2, BlackConstantVol, LocalConstantVol, D, BlackScholesMertonType}(
-            x0, riskFreeRate, dividendYield, blackVolatility, localVolatility, disc, BlackScholesMertonType())
+            x0, riskFreeRate, dividendYield, blackVolatility, localVolatility, disc, 
+            BlackScholesMertonType(), refPrice, x0.value/refPrice)
 end
 
 function BsmDiscreteDiv(x0::Quote, 
@@ -44,7 +52,9 @@ function BsmDiscreteDiv(x0::Quote,
                         blackVolatility::BlackConstantVol, 
                         dividendSchdule::Vector{Date}, 
                         dividendAmounts::Vector{Float64}, 
-                        disc::D = EulerDiscretization()) where {Y <: YieldTermStructure, D <: AbstractDiscretization}
+                        disc::D = EulerDiscretization(),
+                        refPrice::Float64) where {Y <: YieldTermStructure, D <: AbstractDiscretization}
+
     localVolatility = LocalConstantVol(blackVolatility.referenceDate, black_vol(blackVolatility, 0.0, x0.value), blackVolatility.dc)
     refDate = blackVolatility.referenceDate
     dividendTimes = (dividendSchdule .-refDate) .|> x -> x.value / 365.0
@@ -58,7 +68,9 @@ function BsmDiscreteDiv(x0::Quote,
                         dividendSchdule, 
                         dividendTimes, 
                         dividendAmounts,
-                        BlackScholesDiscreteDividendType())
+                        BlackScholesDiscreteDividendType(),
+                        refPrice,
+                        x0.value/refPrice)
 end
 """
 forward_price(::GeneralizedBalckScholesProcess, ::Float64) \n
@@ -134,7 +146,11 @@ function drift(process::BlackScholes, ::BlackScholesDiscreteDividendType, t::Flo
     return x * rate_forward 
 end
 
-diffusion(process::BlackScholes, t::Float64, x::Float64) = local_vol(process.localVolatility, t, x) * x
+diffusion(process::BlackScholes, t::Float64, x::Float64) = diffusion(process, process.blackScholesType, t, x)
+
+function diffusion(process::BlackScholes, ::Union{GeneralBlackScholesType, BlackScholesMertonType}, t::Float64, x::Float64) 
+    return local_vol(process.localVolatility, t, x) * x
+end
 
 state_variable(p::AbstractBlackScholesProcess)=p.x0
 
@@ -148,6 +164,10 @@ expectation(process::BlackScholes, ::Float64, ::Float64, ::Float64) = error("not
 apply(::BlackScholes, x0::Float64, dx::Float64) = x0 + dx
 
 function evolve(process::BlackScholes, t::Float64, x::Float64, dt::Float64, dw::Float64)
+    return evolove(process, process.blackScholesType, t, x, dt, dw)
+end
+
+function evolve(process::BlackScholes, ::Union{GeneralBlackScholesType, BlackScholesMertonType}, t::Float64, x::Float64, dt::Float64, dw::Float64)
     dividend = accumulated_dividend(process, t, t + dt)
 
     return  x + drift(process.disc, process, t, x, dt) + diffusion(process.disc, t, x, dt) * dw - dividend

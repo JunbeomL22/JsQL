@@ -14,7 +14,6 @@ Examples:
 =#
 
 # If it is 6M libor paied in quaterly basis, (fixing, payment) = (6M, 3M)
-# In case of OIS paid in semiannnual basis, (fixing, payment) = (1D, 6M)
 # The case that fixingPeriod < paymentPeriod:
 # Libor => (1+r*tau) ; OIS => (1+r*tau) * ...* (1+r*tau)
 
@@ -147,7 +146,7 @@ function fixing_amount(idx::InterestRateIndex, _fixing_date::Date, forcast_today
 end
 
 function fixing(idx::InterestRateIndex,  _fixing_date::Date, 
-                ts::TermStructure = idx.ts, forcast_todays_fixing::Bool = true)
+                ts::TermStructure = idx.yts, forcast_todays_fixing::Bool = true)
     today = settings.evaluation_date
 
     if _fixing_date > today || (_fixing_date == today && forcast_todays_fixing)
