@@ -4,10 +4,12 @@ struct BlackScholesDiscreteDividendType <: BlackScholesType end
 
 struct BlackScholes{Y1 <: YieldTermStructure, Y2 <: YieldTermStructure, 
                 B <:BlackVolTermStructure, LC <: LocalVolTermStructure, 
-                D <: AbstractDiscretization, BST <: BlackScholesType} <: AbstractBlackScholesProcess
+                D <: AbstractDiscretization, BST <: BlackScholesType, 
+                P<: Interpolation} <: AbstractBlackScholesProcess
     x0::Quote
     riskFreeRate::Y1
     dividendYield::Y2
+    quantoCorr::QuantoCorrelation
     blackVolatility::B
     localVolatility::LC
     disc::D
@@ -15,35 +17,41 @@ struct BlackScholes{Y1 <: YieldTermStructure, Y2 <: YieldTermStructure,
     dividendScedule::Vector{Date}
     dividendTimes::Vector{Float64}
     dividendAmounts::Vector{Float64} # The values are like 30, 40, etc when x0.value is like 4000
-    
+    divInterp::P # stepwise interpolation of accumulated div amount
+
     blackScholesType::BST
-    refPrice::Float64 
-    initialValue::Float64# els reference price
+    refPrice::Float64 # els reference price 
+    initialValue::Float64 # x0 / refPrice | this will be used in simulation
 end
 
 function BlackScholes(x0::Quote, riskFreeRate::Y1, dividendYield::Y2, 
                         blackVolatility::BlackConstantVol, 
                         disc::D = EulerDiscretization(),
-                        refPrice::Float64) where {Y1 <: YieldTermStructure, Y2 <: YieldTermStructure, D <: AbstractDiscretization}
+                        corr::Float64 = 0.0,
+                        refPrice::Float64=1.0) where {Y1 <: YieldTermStructure, Y2 <: YieldTermStructure, 
+                                                        D <: AbstractDiscretization}
     # BoB                            
     localVolatility = LocalConstantVol(blackVolatility.referenceDate, black_vol(blackVolatility, 0.0, x0.value), blackVolatility.dc)
-
-    return BlackScholes{Y1, Y2, BlackConstantVol, LocalConstantVol, D, GeneralBlackScholesType}(x0, riskFreeRate, dividendYield, 
-                        blackVolatility, localVolatility, disc, 
-                        Date[], Float64[], Float64[], 
-                        GeneralBlackScholesType(),
-                        refPrice,
-                        x0.value/refPrice)
+    quanto = QuantoCorrelation(riskFreeRate.referenceDate, Quote(corr))
+    BS = BlackScholes{Y1, Y2, BlackConstantVol, LocalConstantVol, D, GeneralBlackScholesType}
+    return BS(x0, riskFreeRate, dividendYield, 
+                quanto, 
+                blackVolatility, localVolatility, disc, 
+                Date[], Float64[], Float64[], StepwiseInterpolation(), 
+                GeneralBlackScholesType(),
+                refPrice,
+                x0.value/refPrice)
 end
 
 function BsmProcess(x0::Quote, riskFreeRate::Y1, dividendYield::Y2,
                     blackVolatility::BlackConstantVol, 
                     disc::D = EulerDiscretization(),
-                    refPrice::Float64) where {Y1 <: YieldTermStructure, Y2 <: YieldTermStructure, D <: AbstractDiscretization}
+                    corr::Float64 = 0.0, 
+                    refPrice::Float64=1.0) where {Y1 <: YieldTermStructure, Y2 <: YieldTermStructure, D <: AbstractDiscretization}
     localVolatility = LocalConstantVol(blackVolatility.referenceDate, black_vol(blackVolatility, 0.0, x0.value), blackVolatility.dc)
-
+    quanto = QuantoCorrelation(riskFreeRate.referenceDate, Quote(corr))
     return BlackScholes{Y1, Y2, BlackConstantVol, LocalConstantVol, D, BlackScholesMertonType}(
-            x0, riskFreeRate, dividendYield, blackVolatility, localVolatility, disc, 
+            x0, riskFreeRate, dividendYield, quanto, blackVolatility, localVolatility, disc, 
             BlackScholesMertonType(), refPrice, x0.value/refPrice)
 end
 
@@ -53,24 +61,44 @@ function BsmDiscreteDiv(x0::Quote,
                         dividendSchdule::Vector{Date}, 
                         dividendAmounts::Vector{Float64}, 
                         disc::D = EulerDiscretization(),
-                        refPrice::Float64) where {Y <: YieldTermStructure, D <: AbstractDiscretization}
+                        refPrice::Float64=1.0) where {Y <: YieldTermStructure, D <: AbstractDiscretization}
 
     localVolatility = LocalConstantVol(blackVolatility.referenceDate, black_vol(blackVolatility, 0.0, x0.value), blackVolatility.dc)
+    quanto = QuantoCorrelation(riskFreeRate.referenceDate, Quote(corr))
     refDate = blackVolatility.referenceDate
     dividendTimes = (dividendSchdule .-refDate) .|> x -> x.value / 365.0
+    div_amounts = dividendAmounts .* (x0.value / refPrice)
+    interp = StepwiseInterpolation(dividendTimes, accumulate(+, dividendAmounts))
     return BlackScholes{Y, NullYieldTermStructure, BlackConstantVol, LocalConstantVol, D, BlackScholesDiscreteDividendType}(
                         x0, 
                         riskFreeRate, 
                         NullYieldTermStructure(), 
+                        quanto, 
                         blackVolatility, 
                         localVolatility, 
                         disc, 
                         dividendSchdule, 
                         dividendTimes, 
                         dividendAmounts,
+                        interp, 
                         BlackScholesDiscreteDividendType(),
                         refPrice,
                         x0.value/refPrice)
+end
+function update!(process::BlackScholes)
+    refDate = process.riskFreeRate.referenceDate
+    if refDate == process.dividendScedule[1]
+        process.initialValue -= process.dividendAmounts[1]
+        process.x0.value -= process.dividendAmounts[1] * process.refPrice
+    end
+    div_dates = process.dividendScedule
+    div_amounts = process.dividendAmounts
+    div_dates_bit = refDate .< process.DividendSchedule
+    process.dividendScedule = div_dates[div_Dates_bit]
+    process.dividendAmounts = div_amounts[div_Dates_bit]
+    process.dividendTimes = (process.dividendSchdule .-refDate) .|> x -> x.value / 365.0
+    process.divInterp.x_vals = process.dividendTimes 
+    process.divInterp.x_vals = accumulate(+, process.dividendAmounts)
 end
 """
 forward_price(::GeneralizedBalckScholesProcess, ::Float64) \n
@@ -81,7 +109,7 @@ forward_price(process::BlackScholes, t::Float64) = forward_price(process, proces
 
 function forward_price(process::BlackScholes, date::Date)
     t = year_fraction(JsQL.Time.Act365(), process.riskFreeRate.referenceDate, date)
-    return forward_price(process, t)
+    return forward_price(process, process.blackScholesType, t)
 end
 
 function forward_price(process::BlackScholes, ::Union{GeneralBlackScholesType, BlackScholesMertonType}, t::Float64)
@@ -114,8 +142,7 @@ accumulated_dividend(::BlackScholes, ::Float64, ::Float64) \n
 This returns the accumulated dividend (undiscounted) between t1 and t2 
 """
 function accumulated_dividend(process::BlackScholes, t1::Float64, t2::Float64)
-    time_masking = t1 .< process.dividendTimes .<= t2
-    return sum( process.dividendAmounts[time_masking] )
+    return process.divInterp(t2) - process.divInterp(t1)
 end
 """
 compunded_accumulated_dividend(::BlackScholes, ::Float64, ::Float64) \n

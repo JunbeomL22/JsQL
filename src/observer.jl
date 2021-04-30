@@ -15,7 +15,7 @@ end
 
 function notify_observer!(ob::Observer)
     for obsv in get_observer(ob)
-        update!(obsev)
+        update!(obsv)
     end
 
     return ob

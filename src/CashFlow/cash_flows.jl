@@ -9,7 +9,7 @@ mutable struct CouponMixin{DC <: DayCount}
     calcEndDate::Date
     paymentDate::Date
     dc::DC
-    accrual::Float64
+    accrual::Float64 # period
 end
 
 function CouponMixin(fixingDate::Date, calcStartDate::Date, calcEndDate::Date, 

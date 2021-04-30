@@ -32,8 +32,8 @@ end
 first_fixing_date means like 3M, 6M
 """
 function fixing(idx::OvernightIndex,  _fixing_date::Date, 
-                start_date::Date = _fixing_date, end_date::Date = _fixing_date, 
-                ts::TermStructure = idx.yts, forcast_todays_fixing::Bool = true)
+                ts::TermStructure = idx.yts, forcast_todays_fixing::Bool = true,
+                start_date::Date = _fixing_date, end_date::Date = _fixing_date)
     today = settings.evaluation_date
 
     if _fixing_date > today || (_fixing_date == today && forcast_todays_fixing)
@@ -43,6 +43,7 @@ function fixing(idx::OvernightIndex,  _fixing_date::Date,
     fix = fixing_with_past(idx, _fixing_date, start_date, end_date)
     return fix
 end
+
 function fixing_with_past(idx::OvernightIndex, _fixing_date::Date, 
                             start_date::Date = _fixing_date, end_date::Date = _fixing_date)
     past_intervals = interval_value(idx, start_date, end_date)
@@ -50,6 +51,7 @@ function fixing_with_past(idx::OvernightIndex, _fixing_date::Date,
     res /= year_fraction(idx.dc, start_date, end_date)
     return res
 end
+
 """
 This returns \n
 [[fixing_date, start_date, adjust(start_date +Day(1)), value], ...]

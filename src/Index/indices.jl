@@ -146,7 +146,8 @@ function fixing_amount(idx::InterestRateIndex, _fixing_date::Date, forcast_today
 end
 
 function fixing(idx::InterestRateIndex,  _fixing_date::Date, 
-                ts::TermStructure = idx.yts, forcast_todays_fixing::Bool = true)
+                ts::TermStructure = idx.yts, forcast_todays_fixing::Bool = true,
+                start_date::Date = _fixing_date, end_date::Date = _fixing_date)
     today = settings.evaluation_date
 
     if _fixing_date > today || (_fixing_date == today && forcast_todays_fixing)

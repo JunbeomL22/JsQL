@@ -14,6 +14,7 @@ function LinearInterpolation(x::Vector{Float64}, y::Vector{Float64}, extra::Bool
     update!(interp)
     return interp
 end
+
 function initialize!(interp::LinearInterpolation, x_vals::Vector{Float64}, y_vals::Vector{Float64})
     interp.x_vals = x_vals
     interp.y_vals = y_vals

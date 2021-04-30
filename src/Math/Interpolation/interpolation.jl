@@ -10,6 +10,7 @@ function update!(interp::Interpolation, idx::Int, val::Float64)
 
     return interp
 end
+
 function locate(interp::Interpolation, val::Float64)
     if val < interp.x_vals[1]
         return 1
@@ -21,3 +22,5 @@ function locate(interp::Interpolation, val::Float64)
         return searchsortedlast(interp.x_vals, val)
     end
 end
+
+(p::Interpolation)(x::Float64) = value(p, x)

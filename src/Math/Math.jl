@@ -17,7 +17,7 @@ multiply_array_by_self!
 
 export # interpolation.jl
 Interpolation, LinearInterpolation, value, value_flat_outside, update!, 
-locate, initialize!, derivative
+locate, initialize!, derivative, StepwiseInterpolation
 
 export # grid.jl
 bounded_log_grid, log_grid
@@ -45,6 +45,7 @@ include("optimization/simplex.jl")
 
 include("Interpolation/interpolation.jl")
 include("Interpolation/linear_interpolation.jl")
+include("Interpolation/stepwise_interpolation.jl")
 include("grid.jl")
 include("svd.jl")
 include("general_linear_least_squares.jl")

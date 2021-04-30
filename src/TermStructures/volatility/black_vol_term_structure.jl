@@ -37,3 +37,8 @@ function black_variance(bts::BlackVolTermStructure, t::Float64, strike::Float64)
     #TODO check stuff
     return black_variance_impl(bts, t, strike)
 end
+
+mutable struct QuantoCorrelation <: VolatilityTermStructure
+    referenceDate::Date
+    corr::Quote
+end

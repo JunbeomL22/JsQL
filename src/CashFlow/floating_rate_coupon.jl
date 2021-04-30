@@ -4,33 +4,53 @@ mutable struct FloatingCoupon{DC <: DayCount, X <: InterestRateIndex, IR <: Inte
     couponMixin::CouponMixin{DC}
     nominal::Float64
     index::X # this has YTS, and then the YTS is passed to pricer
+    gearing::Float64
     spread::Float64
     pastFixings::Float64 # historical if it is necessary
-    forcastedRate::IR
+    isInArrears::Bool
+    spanningTime::Float64
+    forcastedRate::Float64
 end
 
 function FloatingCoupon(fixingDate::Date, calcStartDate::Date, 
                         calcEndDate::Date, paymentDate::Date, 
-                        faceAmount::Float64, index::X) where {DC <: DayCount, X <: InterestRateIndex} 
+                        faceAmount::Float64, index::X,
+                        isInArrears::Bool=true) where {DC <: DayCount, X <: InterestRateIndex} 
     # BoB
     accrual = year_fraction(index.dc, calcStartDate, calcEndDate)
+    coupon_mixin = CouponMixin{DC}(fixingDate, calcStartDate, calcEndDate, paymentDate, index.dc, accrual)
+    
+    _fixing_date = isInArrears ? fixing_date(index, calcEndDate) : fixing_date(index, calcStartDate)
+    fixing_cal = index.fixingCalendar
+    idx_fixing_days = index.fixingDays
+    fixing_val_date = advance(Day(-idx_fixing_days), fixing_cal, _fixing_date, index.convention)
 
-    return IborCoupon{DC, X}(CouponMixin{DC}(startDate, endDate, refPeriodStart, refPeriodEnd, dc, -1.0), paymentDate, nominal, _fixing_date, fixing_val_date,
-                    fixing_end_date, fixingDays, iborIndex, gearing, spread, isInArrears, spanning_time, pricer)
+    if isInArrears
+        fixing_end_date = maturity_date(index, fixing_val_date)
+    else
+        next_fixing = advance(Day(-idx_fixing_days), fixing_cal, endDate, index.convention)
+        fixing_end_date = advance(Day(idx_fixing_days), fixing_cal, next_fixing, index.convention)
+    end
+
+    spanning_time = year_fraction(index.dc, fixing_val_date, fixing_end_date)
+    return FloatingCoupon{DC, X}(coupon_mixin, faceAmount, index, 1.0, 0.0,
+                                Dict{Date, Float64}[], isInArrears, spanning_time, 0.0)
 end
 
-amount(coup::IborCoupon) = calc_rate(coup) * accrual_period(coup) * coup.nominal
+amount(coup::FloatingCoupon) = calc_rate(coup) * accrual_period(coup) * coup.nominal
 
-get_pay_dates(coups::Vector{IC}) where {IC <: IborCoupon} = Date[date(coup) for coup in coups]
-get_reset_dates(coups::Vector{IC}) where {IC <: IborCoupon} = Date[accrual_start_date(coup) for coup in coups]
-get_gearings(coups::Vector{IC}) where {IC <: IborCoupon} = Float64[coup.gearing for coup in coups]
+accrual_period(coup::FloatingCoupon) = coup.couponMixin.accrual
 
-mutable struct IborLeg{DC <: DayCount, X <: InterestRateIndex, ICP <: IborCouponPricer} <: Leg
+get_pay_dates(coups::Vector{FC}) where {FC <: FloatingCoupon} = Date[date(coup) for coup in coups]
+get_reset_dates(coups::Vector{FC}) where {FC <: FloatingCoupon} = Date[calc_start_date(coup) for coup in coups]
+get_gearings(coups::Vector{FC}) where {FC <: FloatingCoupon} = Float64[coup.gearing for coup in coups]
+
+mutable struct FloatingLeg{DC <: DayCount, X <: InterestRateIndex, ICP <: IborCouponPricer} <: Leg
     coupons::Vector{IborCoupon{DC, X, ICP}}
     redemption::Union{SimpleCashFlow, Nothing}
 end
 
-function IborLeg(schedule::Schedule, nominal::Float64, 
+function FloatingLeg(schedule::Schedule, nominal::Float64, 
                     iborIndex::X, # this has yts
                     paymentDC::DC, paymentAdj::BusinessDayConvention,
                     fixingDays::Vector{Int} = fill(iborIndex.fixingDays, length(schedule.dates)-1),
@@ -115,42 +135,6 @@ end
   
 swaplet_rate(pricer::BlackIborCouponPricer, coup::IborCoupon) = swaplet_price(pricer, coup) / (pricer.accrual_period * pricer.discount)
 
-function adjusted_fixing(pricer::BlackIborCouponPricer, coup::IborCoupon, fixing::Float64 = -1.0)
-    if fixing == -1.0
-        fixing = index_fixing(coup)
-    end
-  
-    if !coup.isInArrears
-        return fixing
-    end
-    
-    # if the vol is null, convexity adjustment is not needed
-    if typeof(pricer.volatility) == NullOptionVolatilityStructure 
-        return fixing
-    end
-
-    if !isdefined(pricer.volatility, :referenceDate) # sanity check for the next body (*)
-        return fixing
-    end
-    
-    ref_date = pricer.volatility.referenceDate # (*)
-    d1 = coup.fixingDate
-
-    if d1 <= ref_date
-        return fixing
-    end
-    
-    idx = coup.iborIndex
-    d2 = value_date(idx, d1)
-    d3 = maturity_date(idx, d2)
-    tau = year_fraction(idx.dc, d2, d3)
-    variance = black_variance(pricer.volatility, d1, fixing)
-  
-    adj = fixing * fixing * variance * tau / (1.0 + fixing * tau)
-
-    return fixing + adj
-end
-
 function index_fixing(coupon::IborCoupon)
     today = settings.evaluation_date
   
@@ -171,19 +155,3 @@ function index_fixing(coupon::IborCoupon)
         return pastFix
     end
 end
-
-"""
-update vol to the pricer \n
-update_pricer!(leg::IborLeg, opt::OptionletVolatilityStructure)
-"""
-function update_pricer!(leg::IborLeg, opt::OptionletVolatilityStructure)
-    for coup in leg.coupons
-      # if isa(coup, IborCoupon)
-      coup.pricer.capletVolatility = opt
-      # end
-    end
-  
-    return leg
-end
-  
-get_pricer_type(leg::IborLeg{DC, X, ICP}) where {DC, X, ICP} = ICP

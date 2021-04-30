@@ -28,7 +28,8 @@ AbstractRandomSequenceGenerator
 
 export #Process
 AbstractBlackScholesProcess, EulerDiscretization, BalckScholes, drift, diffusion, 
-state_variable, black_variance, forward_price, BsmDiscreteDiv, accumulated_dividend, dividend_deduction
+state_variable, black_variance, forward_price, BsmDiscreteDiv, accumulated_dividend, dividend_deduction,
+QuantoCorrelation
 
 export # lazy.jl
 LazyMixin
