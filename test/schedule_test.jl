@@ -1,4 +1,4 @@
-include("D:\\FiccProgram\\JsQL\\test\\libor_data.jl")
+include("D:\\FiccProgram\\JsQL\\test\\data.jl")
 using JsQL.Time
 using JsQL
 using Dates
@@ -23,10 +23,12 @@ rates = [1.0, 0.2, 0.2, 0.2, 0.2]
 
 Lin = JsQL.Math.LinearInterpolation
 
-yts = ZeroCurve(dates, rates, JsQL.Act365(), Lin() )
+yts = ZeroCurve(dates, rates, JsQL.Act365())
 
 fixing_period = TenorPeriod(Quaterly())
 payment_period = TenorPeriod(Quaterly())
 
 libor = usd_libor_index(fixing_period, payment_period, yts)
 libor.pastFixings = past
+
+FloatingLeg(schedule, 100., libor, Following())
