@@ -21,8 +21,6 @@ set_eval_date!(settings, eval_date)
 dates = eval_date + Day.(round.([0.0, 0.25, 0.5, 0.75, 1.0] .* 365))
 rates = [1.0, 0.2, 0.2, 0.2, 0.2]
 
-Lin = JsQL.Math.LinearInterpolation
-
 yts = ZeroCurve(dates, rates, JsQL.Act365())
 
 fixing_period = TenorPeriod(Quaterly())
@@ -31,4 +29,9 @@ payment_period = TenorPeriod(Quaterly())
 libor = usd_libor_index(fixing_period, payment_period, yts)
 libor.pastFixings = past
 
-FloatingLeg(schedule, 100., libor, Following())
+leg = FloatingLeg(schedule, 100., libor, Following())
+
+for c in leg.coupons
+    mixin = c.couponMixin
+    println(mixin.fixingDate, ", ", mixin.calcStartDate, ", ", mixin.calcEndDate, ", ", mixin.calcEndDate)
+end

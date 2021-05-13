@@ -24,10 +24,11 @@ mutable struct BondResults
     tenors::Vector{Period}
     delta::Vector{Float64}
     gamma::Vector{Float64}
+    fxDelta::Float64 # based on the curency on settings
 end
 
 function BondResults()
-    return BondResults(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Period[], Float64[], Float64[])    
+    return BondResults(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Period[], Float64[], Float64[], 0.0)    
 end
 
 mutable struct FixedCouponBond{DC <: DayCount, P <: PricingEngine, C <:CompoundingType, F <: Frequency, IR <: InterestRate} <: Bond
@@ -40,8 +41,10 @@ mutable struct FixedCouponBond{DC <: DayCount, P <: PricingEngine, C <:Compoundi
     dc::DC
 
     ytm::IR
+        
     pricingEngine::P
     results::BondResults
+    currency::Currency
 end
 
 function FixedCouponBond(paymentDays::Int, faceAmount::Float64,
@@ -53,7 +56,8 @@ function FixedCouponBond(paymentDays::Int, faceAmount::Float64,
                         paymentConvention::B = Following(),
                         pricingEngine::P = DiscountingBondEngine(),
                         add_redemption::Bool=true,
-                        ytm::Float64 = -Inf) where {DC <: DayCount, B <: BusinessDayConvention,
+                        ytm::Float64 = -Inf,
+                        currency::Currency = KRWCurrency()) where {DC <: DayCount, B <: BusinessDayConvention,
                                                     C <: BusinessCalendar, P <: PricingEngine}
     # BoB
     tp = TenorPeriod(couponFreq)
@@ -73,14 +77,16 @@ function FixedCouponBond(paymentDays::Int, faceAmount::Float64,
                                                                                                 dc,
                                                                                                 ytm_ir,
                                                                                                 pricingEngine,
-                                                                                                BondResults())
+                                                                                                BondResults(),
+                                                                                                currency)
 end
 
 function FixedCouponBond(paymentDays::Int, 
                         faceAmount::Float64, schedule::Schedule,
                         coup_rate::Float64, dc::DC, paymentConvention::B,
                         issueDate::Date, calendar::C, pricingEngine::P,
-                        ytm::Float64 = -Inf) where {DC <: DayCount, B <: BusinessDayConvention,
+                        ytm::Float64 = -Inf, 
+                        currency::Currency = KRWCurrency()) where {DC <: DayCount, B <: BusinessDayConvention,
                                                     C <: BusinessCalendar, P <: PricingEngine}
     maturity = schedule.dates[end]
     coups = FixedRateLeg(schedule, faceAmount, coup_rate, calendar, 
@@ -96,7 +102,8 @@ function FixedCouponBond(paymentDays::Int,
                                                                                                 dc,
                                                                                                 ytm_ir,
                                                                                                 pricingEngine,
-                                                                                                BondResults())
+                                                                                                BondResults(),
+                                                                                                currency)
 end
                                                                     
 mutable struct ZeroCouponBond{BC <: BusinessCalendar, P <: PricingEngine, IR <: InterestRate} <: Bond
@@ -108,19 +115,22 @@ mutable struct ZeroCouponBond{BC <: BusinessCalendar, P <: PricingEngine, IR <: 
     ytm::IR
     pricingEngine::P
     results::BondResults
+    currency::Currency
 end
 
 function ZeroCouponBond(paymentDays::Int, calendar::B,
                         faceAmount::Float64, maturity::Date, paymentConvention::C = Following(),
                         issueDate::Date = Date(0),
                         ytm::Float64 = -Inf, 
-                        pe::P = DiscountBondEngine()) where {B <: BusinessCalendar, C <: BusinessDayConvention, P <: PricingEngine}
+                        pe::P = DiscountBondEngine(),
+                        currency::Currency = KRWCurrency()) where {B <: BusinessCalendar, C <: BusinessDayConvention, P <: PricingEngine}
     #BoB
     cf = ZeroCouponLeg(SimpleCashFlow(faceAmount, maturity))
     paymentDate = adjust(calendar, maturity, paymentConvention)
     ytm_ir = InterestRate(ytm)
     return ZeroCouponBond{B, P}(LazyMixin(), BondMixin(0, paymentDays, issueDate, maturity),
-                                faceAmount, paymentDate, calendar, ytm_ir, pe, BondResults())
+                                faceAmount, paymentDate, calendar, ytm_ir, pe, BondResults(),
+                                currency::Currency)
 end
 
 get_maturity(b::Bond) = b.bondMixin.maturity
