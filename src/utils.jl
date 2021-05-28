@@ -1,3 +1,5 @@
+using Random
+
 function interospect_index_ratio(x::T, v::Vector{T}) where {T<: Any}
     issorted(v) || error("the vector in instrospection util is not sorted.")
     i = findfirst(λ-> λ >= x , v)
@@ -71,3 +73,20 @@ function cdf_approximation(x::Float64)
         return 1.0 - cdf_approximation(-x)
     end
 end
+
+#=
+"""
+deprecated, slower than randn
+"""
+function multithreading_standard_normal(rng::AbstractRNG, shape::Int...) 
+    num = reduce(*, shape)
+    seed = rng.seed[1]
+    res = Vector{Float64}(undef, num)
+    generatorType = typeof(rng)
+    Threads.@threads for i = 1:num
+        gen = generatorType(seed+i)
+        res[i] = randn(gen)
+    end
+    return reshape(collect(res), shape)
+end
+=#

@@ -8,13 +8,14 @@ mutable struct FloatingCoupon{DC <: DayCount, X <: InterestRateIndex} <: Coupon
     spread::Float64
     isInArrears::Bool
     spanningTime::Float64 # difference between fixing_start and fixing_end
-    forcastedRate::Float64
+    forecastedRate::Float64
 end
 
 function FloatingCoupon(fixingDate::Date, calcStartDate::Date, 
                         calcEndDate::Date, paymentDate::Date, 
                         faceAmount::Float64, index::X,
                         isInArrears::Bool=true,
+                        forecastedRate::Float64 =0.0,
                         gearing::Float64 = 1.0, 
                         spread::Float64 = 0.0) where {X <: InterestRateIndex} 
     # BoB
@@ -35,11 +36,10 @@ function FloatingCoupon(fixingDate::Date, calcStartDate::Date,
 
     spanning_time = year_fraction(index.dc, fixing_val_date, fixing_end_date)
     return FloatingCoupon{typeof(index.dc), X}(coupon_mixin, faceAmount, index, gearing, 
-                                                spread, isInArrears, spanning_time, 0.0)
+                                                spread, isInArrears, spanning_time, forecastedRate)
 end
 
 amount(coup::FloatingCoupon) = calc_rate(coup) * accrual_period(coup) * coup.nominal
-
 accrual_period(coup::FloatingCoupon) = coup.couponMixin.accrual
 
 get_pay_dates(coups::Vector{FC}) where {FC <: FloatingCoupon} = Date[date(coup) for coup in coups]
@@ -70,17 +70,20 @@ function FloatingLeg(schedule::Schedule, nominal::Float64,
     _end = ref_end = schedule.dates[2]
     payment_date = adjust(schedule.cal, paymentAdj, _end+Day(paymentDays))
     fixing_date = adjust(index.fixingCalendar, index.convention, _start + Day(fixingDays))
+
     coups[1] = FloatingCoupon(fixing_date, _start, _end, payment_date, nominal, index, isInArrears, gearings[1], spreads[1])
-                            
+    #set_calc_rate!(coups[1])              
+
     count = 2
     ref_start = _start = _end
     ref_end = _end = count == length(schedule.dates) ? schedule.dates[end] : schedule.dates[count + 1]
     payment_date = adjust(schedule.cal, paymentAdj, _end + Day(paymentDays))
-    fixing_date = adjust(index.fixingCalendar, index.convention, _start + Day(fixingDays))
+    fixing_date  = adjust(index.fixingCalendar, index.convention, _start + Day(fixingDays))
 
     while _start < schedule.dates[end]
         @inbounds coups[count] = FloatingCoupon(fixing_date, _start, _end, payment_date, 
                                                 nominal, index, isInArrears, gearings[count], spreads[count])
+        #@inbounds set_calc_rate!(coups[count])    
         count += 1
         ref_start = _start = _end
         ref_end = _end = count == length(schedule.dates) ? schedule.dates[end] : schedule.dates[count + 1]
@@ -99,11 +102,17 @@ end
 
 """
 calc_rate(coup::IborCoupon) \n
-gives the forcasted forward rate or the rate fixed in past given in the IborCoupon fixing date
+gives the forecasted forward rate or the rate fixed in past given in the IborCoupon fixing date
 """
 function calc_rate(coup::FloatingCoupon)
     coupMixin = coup.couponMixin
-    res= fixing(coup.index, coupMixin.fixingDate, idx.yts, true, coupMixin.calcStartDate, coupMixin.calcEndDate)
+    res= fixing(coup.index, coupMixin.fixingDate, idx.yts, coupMixin.calcStartDate, coupMixin.calcEndDate, true)
     
     return res
+end
+
+function set_calc_rate!(coup::FloatingCoupon)
+    coupMixin = coup.couponMixin
+    res= fixing(coup.index, coupMixin.fixingDate, coup.index.yts, coupMixin.calcStartDate, coupMixin.calcEndDate, true)
+    coup.forecastedRate = res
 end

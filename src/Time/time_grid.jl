@@ -27,8 +27,8 @@ function DateTimeGrid(refDate::Date, maturity::Date;
 
     days = (maturity - refDate).value
     dates = Vector{Date}(undef, days+1)
-    dates[1] = refDate
-    date = deepcopy(refDate)
+    
+    dates[1] = deepcopy(refDate)
     idx = 1
     @inbounds @simd for i = 1:days
         d = refDate + Day(i)

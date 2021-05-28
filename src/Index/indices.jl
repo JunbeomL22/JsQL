@@ -25,8 +25,8 @@ struct IborIndex{TP<: TenorPeriod, CUR <: AbstractCurrency, B <: BusinessCalenda
     #
     familyName::String
     #
-    fixingPeriod::TP
-    paymentPeiord::TP 
+    fixingPeriod::TP # basically swap fixing period, Normally "3M" or "6M"
+    paymentPeiord::TP # Normally follow fixingPeriod
     #
     fixingDays::Int # Normally Day(2)
     currency::CUR
@@ -103,6 +103,7 @@ end
 # fixing -> value -> maturity#
 """ 
 fixing_date(idx::InterestRateIndex, d::Date) \n
+
 It returns the fixing date from the value date (=d)
 """
 fixing_date(idx::InterestRateIndex, d::Date) = advance(Dates.Day(idx.fixingDays), idx.fixingCalendar, d)
@@ -136,9 +137,13 @@ returs the value date from the fixing date
 """
 value_date(idx::InterestRateIndex, d::Date) = advance(Dates.Day(-idx.fixingDays), idx.fixingCalendar, d)
 
-function fixing_amount(idx::InterestRateIndex, _fixing_date::Date, forcast_todays_fixing::Bool = true)
-    rate = fixing(idx, _fixing_date, idx.yts, forcast_todays_fixing)
-    pay  = payment_date(idx, d)
+function fixing_amount(idx::InterestRateIndex, _fixing_date::Date, 
+                ts::TermStructure = idx.yts, 
+                start_date::Date = _fixing_date, end_date::Date = _fixing_date,
+                forcast_todays_fixing::Bool = true)
+
+    rate = fixing(idx, _fixing_date, ts, start_date, end_date, forcast_todays_fixing)
+    
     d1   = value_date(idx, _fixing_date)
     d2   = maturity_date(idx, d1)
     frac = year_fraction(idx.dc, d1, d2)
@@ -146,8 +151,10 @@ function fixing_amount(idx::InterestRateIndex, _fixing_date::Date, forcast_today
 end
 
 function fixing(idx::InterestRateIndex,  _fixing_date::Date, 
-                ts::TermStructure = idx.yts, forcast_todays_fixing::Bool = true,
-                start_date::Date = _fixing_date, end_date::Date = _fixing_date)
+                ts::TermStructure = idx.yts, 
+                start_date::Date = _fixing_date, end_date::Date = _fixing_date,
+                forcast_todays_fixing::Bool = true)
+
     today = settings.evaluation_date
 
     if _fixing_date > today || (_fixing_date == today && forcast_todays_fixing)
@@ -157,21 +164,21 @@ function fixing(idx::InterestRateIndex,  _fixing_date::Date,
     pastFix = get(idx.pastFixings, _fixing_date, -1.0)
 
     if pastFix ≈ -1.0
-        return forcast_fixing(idx, ts, _fixing_date)
+        return forecast_fixing(idx, ts, _fixing_date)
     else
         return pastFix
     end
     
 end
 
-function forcast_fixing(idx::InterestRateIndex, ts::TermStructure, _fixing_date::Date)
+function forecast_fixing(idx::InterestRateIndex, ts::TermStructure, _fixing_date::Date)
     d1 = value_date(idx, _fixing_date)
     d2 = maturity_date(idx, d1)
-    t = year_fraction(idx.dc, d1, d2)
+    t = year_fraction(idx.dc, d1, d2) 
     return forecast_fixing(idx, ts, d1, d2, t)
 end
 
-function forcast_fixing(idx::InterestRateIndex, ts::TermStructure, d1::Date, d2::Date, t::Float64)
+function forecast_fixing(idx::InterestRateIndex, ts::TermStructure, d1::Date, d2::Date, t::Float64)
     disc1 = discount(ts, d1)
     disc2 = discount(ts, d2)
     return (disc1 / disc2 - 1.0) / t
@@ -192,7 +199,7 @@ function value_date(idx::LiborIndex, d::Date)
 end
   
 function maturity_date(idx::LiborIndex, d::Date)
-    mat = advance(idx.fixingPeriod, idx.fixingCalendar, d)
+    mat = advance(idx.fixingPeriod.period, idx.fixingCalendar, d, Unadjusted())
     if idx.endOfMonth && is_endofmonth(d)
         return lastdayofmonth(mat)
     else

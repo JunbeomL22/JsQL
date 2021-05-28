@@ -68,3 +68,6 @@ abstract type PricingEngine end
 abstract type ImpliedVolatility end
 # Random Number GeneralBlackScholesType
 abstract type AbstractRandomSequenceGenerator end
+
+abstract type Parameter end
+abstract type Volatility <: Parameter end

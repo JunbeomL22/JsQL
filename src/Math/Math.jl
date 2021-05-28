@@ -1,5 +1,7 @@
 module Math
 
+const Float = Float64
+
 function multiply_array_by_self!(a::Vector{T}, x::N) where {T, N <: Number}
     for i = 1:length(a)
       a[i] = a[i] * x
@@ -8,16 +10,19 @@ function multiply_array_by_self!(a::Vector{T}, x::N) where {T, N <: Number}
     return a
 end
 
+
 abstract type FunctionType end
 
 struct Derivative <: FunctionType end
+
+export Float 
 
 export 
 multiply_array_by_self!
 
 export # interpolation.jl
 Interpolation, LinearInterpolation, value, value_flat_outside, update!, 
-locate, initialize!, derivative, StepwiseInterpolation
+locate, initialize!, derivative, StepForwardInterpolation
 
 export # grid.jl
 bounded_log_grid, log_grid

@@ -1,30 +1,3 @@
-abstract type PerformanceType end
-struct Worst <: PerformanceType end
-struct Best <: PerformanceType end
-
-
-(Worst::PerformanceType)(x::Vector{Float64}) = min(x...)
-
-function (Worst::PerformanceType)(x::Matrix{Float64})
-    col = size(x)[2]
-    res = Vector{Float64}(undef, col)
-    for i=1:col
-        res[i] = min(x[:, i]...)
-    end
-    return res
-end
-
-(Best::PerformanceType)(x::Vector{Float64}) = max(x...)
-
-function (Best::PerformanceType)(x::Matrix{Float64})
-    col = size(x)[2]
-    res = Vector{Float64}(undef, col)
-    for i=1:col
-        res[i] = max(x[:, i]...)
-    end
-    return res
-end
-
 struct ElsPayoff <: AbstractPayoff
     maturity::Date
     rangeDates::Vector{Date}

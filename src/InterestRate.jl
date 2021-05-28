@@ -32,7 +32,7 @@ function compound_factor(ir::InterestRate, date1::Date, date2::Date, ref_start::
     date2 < date1 && error("Date1 $date1 later than date2 $date2")
   
     return compound_factor(ir, year_fraction(ir.dc, date1, date2))
-  end
+end
 """
 Basically, the inverse of a compoun factor, i.e., 
 
@@ -49,6 +49,11 @@ function implied_rate(compound::Float64, dc::DC, comp::C, time_frac::Float64, fr
     return InterestRate{DC, C, F}(rate, dc, comp, freq)
 end
 
+function implied_rate(compound::Float64, dc::DC, comp::C, d1::Date, d2::Date, freq::F) where {DC <: DayCount, C<: CompoundingType, F<: Frequency} 
+    time_frac = year_fraction(dc, d1, d2)
+    rate = compound ≈ 1.0 ? 0.0 : _implied_rate(comp, compound, time_frac, freq)
+    return InterestRate{DC, C, F}(rate, dc, comp, freq)
+end
 
 function implied_rate(compound::Float64, dc::DayCount, comp::CompoundingType, st::Date, ed::Date)
     #

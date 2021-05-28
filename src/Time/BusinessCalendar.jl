@@ -1,31 +1,24 @@
 import Dates: adjust
+
 abstract type BusinessCalendar end
-#
-struct TargetCalendar <: BusinessCalendar end
-struct NullCalendar <: BusinessCalendar end
-#
 abstract type WesternCalendar <: BusinessCalendar end
 abstract type EasternCalendar <: BusinessCalendar end
-#
 abstract type UnitedStatesCalendar <: WesternCalendar end
 abstract type UnitedKingdomCalendar <: WesternCalendar end
 abstract type EuroCalendar <: WesternCalendar end
-#
-
 abstract type SouthKoreaCalendar <: EasternCalendar end
-#abstract type HongKongCalendar <: EasternCalendar end
-#abstract type JapanCalendar <: EasternCalendar end
+abstract type BusinessDayConvention end
 
+struct NullCalendar <: BusinessCalendar end
+struct Unadjusted <: BusinessDayConvention end
+struct ModifiedFollowing <: BusinessDayConvention end
+struct Following <: BusinessDayConvention end
+struct TargetCalendar <: BusinessCalendar end
 mutable struct JointCalendar{B <: BusinessCalendar, C <: BusinessCalendar} <: BusinessCalendar
     cal1::B
     cal2::C
 end
-
-abstract type BusinessDayConvention end
-struct Unadjusted <: BusinessDayConvention end
-struct ModifiedFollowing <: BusinessDayConvention end
-struct Following <: BusinessDayConvention end
-# The following types have not be used
+# The following types have not been used
 struct Preceding <: BusinessDayConvention end
 struct ModifiedPreceding <: BusinessDayConvention end
 
@@ -78,46 +71,14 @@ function easter_date(y::Int)
     return Date(Dates.rata2datetime( easter_rata(y) ))
 end
 
-"""
-This push the date to the direction NOT considering businessday convention. \n
-With the Dates.Day (as the first argument) and without convention, \n
-    we use this functino only for moving the date \n
-For example, say \n
-d = Date(2020, 12, 16)\n
-calendar = NullCalendar()\n
-advance(Day(-3), calendar, d) => 2020-12-11\n
-advance(Day(3), calendar, d)  => 2020-12-21
-"""
-function advance(days::Day, cal::BusinessCalendar, dt::Date)
-    n = days.value
-    if n > 0
-      while n > 0
-        dt += Day(1)
-        while !is_business_day(cal, dt)
-          dt += Day(1)
-          
-        end
-        n -= 1
-      end
-    else
-      while (n < 0)
-        dt -= Day(1)
-        while !is_business_day(cal, dt)
-          dt -= Day(1)
-        end
-        n += 1
-      end
-    end
-  
-    return dt
-end
-
-function advance(time_period::Union{Day, Week, Month, Year}, cal::BusinessCalendar, dt::Date, biz_conv::BusinessDayConvention)
+function advance(time_period::Union{Day, Week, Month, Year}, cal::BusinessCalendar, 
+                dt::Date, biz_conv::BusinessDayConvention=Unadjusted())
     # move the date w.o. convention
     dt += time_period
     # now consider the convention by the following function:
     return adjust(cal, biz_conv, dt)
 end
+
 adjust(::BusinessCalendar, bdc::BusinessDayConvention, d::Date) = error("undefined for $(typeof(bdc))")
 
 adjust(::BusinessCalendar, ::Unadjusted, d::Date) = d
@@ -128,6 +89,7 @@ function adjust(cal::BusinessCalendar, ::Following, d::Date)
     end
     return d
 end
+
 function adjust(cal::BusinessCalendar, ::ModifiedFollowing, d::Date)
     x = d
     while !is_business_day(cal, x)
@@ -137,7 +99,6 @@ function adjust(cal::BusinessCalendar, ::ModifiedFollowing, d::Date)
     if Month(x) != Month(d)  
         return advance(Day(-1), cal, x)
     else
-   
         return x
     end
 end
@@ -216,3 +177,39 @@ end
 function is_endofmonth(d::Date)
     return d == lastdayofmonth(d)
 end
+
+#=
+"""
+This push the date to the direction NOT considering businessday convention. \n
+With the Dates.Day (as the first argument) and without convention, \n
+    we use this functino only for moving the date \n
+For example, say \n
+d = Date(2020, 12, 16)\n
+calendar = NullCalendar()\n
+advance(Day(-3), calendar, d) => 2020-12-11\n
+advance(Day(3), calendar, d)  => 2020-12-21
+"""
+""" deprecated
+function advance(days::Day, cal::BusinessCalendar, dt::Date)
+    n = days.value
+    if n > 0
+      while n > 0
+        dt += Day(1)
+        while !is_business_day(cal, dt)
+          dt += Day(1)   
+        end
+        n -= 1
+      end
+    else
+      while (n < 0)
+        dt -= Day(1)
+        while !is_business_day(cal, dt)
+          dt -= Day(1)
+        end
+        n += 1
+      end
+    end
+    return dt
+end
+"""
+=#

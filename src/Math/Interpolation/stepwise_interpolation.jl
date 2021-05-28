@@ -1,11 +1,11 @@
-mutable struct StepwiseInterpolation <: Interpolation
-    x_vals::Vector{Float64}
-    y_vals::Vector{Float64}
+mutable struct StepForwardInterpolation <: Interpolation
+    x_vals::Vector{Float}
+    y_vals::Vector{Float}
 end
 
-StepwiseInterpolation() = StepwiseInterpolation(Float64[], Float64[])
+StepForwardInterpolation() = StepForwardInterpolation(Float64[], Float64[])
 
-function value(interp::StepwiseInterpolation, val::Float64)
+function value(interp::StepForwardInterpolation, val::Float)
     i = 0
     if val < interp.x_vals[1]
         i = 1

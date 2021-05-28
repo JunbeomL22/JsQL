@@ -8,6 +8,14 @@ abstract type Thirty360  <:  DayCount end
 struct BondThirty360     <: Thirty360 end
 struct EuroBondThirty360 <: Thirty360 end
 
+abstract type ActAct <: DayCount end
+struct IsdaActAct <: ActAct end
+
+"""
+default case, basically actact
+"""
+day_count(c::DayCount, d_start::Date, d_end::Date) = Dates.value(d_end - d_start) # Int(d_end - d_start)
+
 days_per_year(::Union{Act360, Thirty360}) = 360.0
 days_per_year(::Act365) = 365.0
 
@@ -52,4 +60,26 @@ end
 
 year_fraction(c::DayCount, st::Date, ed::Date) = day_count(c, st, ed) / days_per_year(c)
 
-year_fraction(st::Date, ed::Date) = year_fraction(JsQL.Time.Act365(), st, ed)
+year_fraction(st::Date, ed::Date) = year_fraction(IsdaActAct(), st, ed)
+
+function year_fraction(dc::IsdaActAct, d1::Date, d2::Date, ::Date = Date(0), ::Date = Date(0))
+    if d1 == d2
+        return 0.0
+    end
+  
+    if d1 > d2
+        return -year_fraction(dc, d2, d1, Date(0), Date(0))
+    end
+  
+    y1 = year(d1)
+    y2 = year(d2)
+  
+    dib1 = daysinyear(d1)
+    dib2 = daysinyear(d2)
+
+    sum = y2 - y1 - 1
+  
+    sum += day_count(dc, d1, Date(y1+1, 1, 1)) / dib1
+    sum += day_count(dc, Date(y2, 1, 1), d2) / dib2
+    return sum
+end   

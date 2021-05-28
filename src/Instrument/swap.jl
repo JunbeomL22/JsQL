@@ -110,10 +110,9 @@ get_fixed_coupons(swap::VanillaSwap) = swap.args.fixedCoupons
 get_floating_coupons(swap::VanillaSwap) = swap.args.floatingCoupons
 
 _build_payer(::Receiver) = [1.0, -1.0]
-_build_payer(::Payer)    = [-1.0, 1.0]    
+_build_payer(::Payer)    = [-1.0, 1.0]
 
 get_pricing_engine_type(::VanillaSwap{ST, DC_fix, DC_float, B, L, P, II}) where {ST, DC_fix, DC_float, B, L, P, II} = P
-
 
 #=
 function update_ts_idx!(swap::VanillaSwap, ts::TermStructure)

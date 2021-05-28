@@ -19,8 +19,7 @@ const list_currencies=[
 ("U.S. dollar", "USD", 840, "\$", "¢", 100, identity, "%3% %1\$.2f"),
 # Asia
 ("Chinese yuan", "CNY", 156, "Y", "", 100, identity, "%3% %1\$.2f"),
-("Hong
- Kong dollar", "HKD", 344, "HK\$", "", 100, identity, "%3% %1\$.2f"),
+("Hong Kong dollar", "HKD", 344, "HK\$", "", 100, identity, "%3% %1\$.2f"),
 ("Indian rupee", "INR", 356, "Rs", "", 100, identity, "%3% %1\$.2f"),
 ("Iranian rial", "IRR", 364, "Rls", "", 1, identity, "%3% %1\$.2f"),
 ("Japanese yen", "JPY", 392, "¥", "", 100, identity, "%3% %1\$.0f"),

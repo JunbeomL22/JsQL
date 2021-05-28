@@ -4,14 +4,14 @@ abstract type Interpolation2D <: Interpolation end
 abstract type DerivativeApprox end
 abstract type BoundaryCondition end
 
-function update!(interp::Interpolation, idx::Int, val::Float64)
+function update!(interp::Interpolation, idx::Int, val::Float)
     interp.y_vals[idx] = val
     update!(interp, idx)
 
     return interp
 end
 
-function locate(interp::Interpolation, val::Float64)
+function locate(interp::Interpolation, val::Float)
     if val < interp.x_vals[1]
         return 1
     elseif val >= interp.x_vals[end - 1]
@@ -23,4 +23,4 @@ function locate(interp::Interpolation, val::Float64)
     end
 end
 
-(p::Interpolation)(x::Float64) = value(p, x)
+(p::Interpolation)(x::Float) = value(p, x)

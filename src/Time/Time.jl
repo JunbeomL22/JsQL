@@ -19,7 +19,7 @@ Quaterly, Monthly, Weekly, Daily, Biweekly, EveryFourthMonth, EveryFourthWeek, B
 
 
 export # day_count.jl
-DayCount, Act360, Act365, day_count, days_per_year, year_fraction
+DayCount, Act360, Act365, day_count, days_per_year, year_fraction, IsdaActAct
 
 export # BusinessCalendar.jl
 BusinessCalendar, WesternCalendar, KoreaCalendar, JointCalendar,

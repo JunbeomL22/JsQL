@@ -1,41 +1,42 @@
 struct OvernightIndex{TP<: TenorPeriod, CUR <: AbstractCurrency, B <: BusinessCalendar,
-                C <: BusinessDayConvention, DC <: DayCount, T <: TermStructure} <: InterestRateIndex
-    #
+                        C <: BusinessDayConvention, DC <: DayCount, T <: TermStructure} <: InterestRateIndex
     familyName::String
-    #
-    fixingPeriod::TP
+
+    fixingPeriod::TP # basically swap fixing period, e.g., "3M", "6M", etc
+                     # the nature of overnight index is taken care of since this type is separately defined.
     paymentPeiord::TP 
-    #
-    fixingDays::Int # Normally Day(1)
+    
+    fixingDays::Int  # -1,-2, etc: e.g., (fixing, value, value_end) = (d + fixingDays, d, d+"3M")
     currency::CUR
     fixingCalendar::B
     convention::C
-    #endOfMonth::Bool
+    
     dc::DC
     yts::TermStructure
     pastFixings::Dict{Date, Float64}
+    endOfMonth::Bool
 end
 
 function OvernightIndex(familyName::String, fixingPeriod::TP, paymentPeriod::TP, 
                         fixingDays::Int, currency::CUR, fixingCalendar::B, 
-                        convention::C, ts::T = NullTermStructure(), pastFixings = Dict{Date, Float64}()
-                        ) where {TP <: TenorPeriod, CUR <: AbstractCurrency, B <: BusinessCalendar, 
-                                C <: BusinessDayConvention, DC <: DayCount, T <: TermStructure} 
+                        dc::DC, convention::C, ts::T = NullTermStructure(), pastFixings = Dict{Date, Float64}(),
+                        eom::Bool = false) where {TP <: TenorPeriod, CUR <: AbstractCurrency, B <: BusinessCalendar, C <: BusinessDayConvention, DC <: DayCount, T <: TermStructure} 
     # BoB
     return OvernightIndex{TP, CUR, B, C, DC, T}(familyName, fixingPeriod, 
                                                 paymentPeriod, fixingDays, currency, 
                                                 fixingCalendar, convention,
-                                                dc, ts, pastFixings)
+                                                dc, ts, pastFixings, eom)
 end
 
 """
 first_fixing_date means like 3M, 6M
 """
 function fixing(idx::OvernightIndex,  _fixing_date::Date, 
-                ts::TermStructure = idx.yts, forcast_todays_fixing::Bool = true,
-                start_date::Date = _fixing_date, end_date::Date = _fixing_date)
+                ts::TermStructure = idx.yts,
+                start_date::Date = _fixing_date, end_date::Date = _fixing_date,
+                forcast_todays_fixing::Bool = true)
+    # BoB        
     today = settings.evaluation_date
-
     if _fixing_date > today || (_fixing_date == today && forcast_todays_fixing)
         return forecast_fixing(idx, ts, _fixing_date)
     end
@@ -70,7 +71,7 @@ function interval_value(idx::OvernightIndex, start_date::Date, end_date::Date)
         e = advance(Day(1), cal, s)
         return s, e
     end
-    res = map(x->[x[1], interval(x[1], fixingDays, idx.jointCalendar)..., x[2]], past)
+    res = map(x->[x[1], interval(x[1], fixingDays, idx.fixingCalendar)..., x[2]], past)
     res[1][2] = minimum([res[1][2], start_date])
     return res
 end
@@ -86,8 +87,8 @@ end
 function compound(idx::OvernightIndex, x::Vector{Vector{Any}}, end_date::Date)
     past_compound = _past_compound(idx, x)
     past_end = x[end][3]
-    frac = year_fraction(idx.fixingCalendar, past_end, end_date)
-    r = forward_rate(idx.yts, idx.referenceDate, end_date)
+    frac = year_fraction(idx.dc, past_end, end_date)
+    r = forward_rate(idx.yts, idx.yts.referenceDate, end_date, idx.dc).rate
     return past_compound * (1.0+frac*r)
 end
 
@@ -103,6 +104,7 @@ function earliest_intrerval(idx::OvernightIndex, d::Date, schedule::Schedule)
     return (schedule[count-1], schedule[count], paydate)
 end
 
+#=
 function interval_value(idx::OvernightIndex, start_date::Date, end_date::Date)
     fixingDays = idx.fixingDays
     cal = idx.fixingCalendar
@@ -117,7 +119,7 @@ function interval_value(idx::OvernightIndex, start_date::Date, end_date::Date)
         e = advance(Day(1), cal, s)
         return s, e
     end
-    res = map(x->[x[1], interval(x[1], fixingDays, idx.jointCalendar)..., x[2]], past)
+    res = map(x->[x[1], interval(x[1], fixingDays, cal)..., x[2]], past)
     res[1][2] = minimum([res[1][2], start_date])
     return res
 end
@@ -133,7 +135,8 @@ end
 function compound(idx::OvernightIndex, x::Vector{Vector{Any}}, end_date::Date)
     past_compound = _past_compound(idx, x)
     past_end = x[end][3]
-    frac = year_fraction(idx.fixingCalendar, past_end, end_date)
-    r = forward_rate(idx.yts, idx.referenceDate, end_date)
-    return past_compound * (1.0+frac*r)
+    frac = year_fraction(idx.dc, past_end, end_date)
+    r = forward_rate(idx.yts, idx.yts.referenceDate, end_date, idx.dc)
+    return past_compound * (1.0+frac*r.rate)
 end
+=#
