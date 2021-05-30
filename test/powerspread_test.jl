@@ -4,7 +4,7 @@ using Dates
 using BenchmarkTools
 
 ref_date = Date(2021, 1, 2)
-dates = [ref_date + Month(i) for i =0:2]
+dates = [ref_date + Month(6*i) for i =0:2]
 sigma = [0.1, 0.1, 0.1]
 
 vol = TimeStepVolatility(ref_date, dates, sigma)
@@ -21,16 +21,17 @@ function build_y(lambda::Float, times::Vector{Float}, sigma::Vector{Float}, maxT
     sigma_squared = sigma .^2.0
     rhs_point = typeof(sigma_squared)(undef, length(sigma_squared))
     rhs_point[1] = sigma_squared[1]
-    rhs_point[2:end] = (sigma_squared[2:end] - sigma_squared[1:end-1]) .* exp.(2.0*lambda .* times[2:end]) ./(2.0*lambda)
+    rhs_point[2:end] = (sigma_squared[2:end] - sigma_squared[1:end-1]) .* exp.(2.0*lambda .* times[2:end]) 
+    rhs_point = accumulate(+, rhs_point)
     rhs_interp = JsQL.Math.StepForwardInterpolation(times, rhs_point)
 
-    lhs_interp = JsQL.Math.StepForwardInterpolation(times, sigma_squared)
+    ss_interp = JsQL.Math.StepForwardInterpolation(times, sigma_squared)
 
-    y_times  = collect(range(0.0, maxTime, length=timeStep))
+    y_times  = times#collect(range(0.0, 2.0, length=21))
 
-    _x = exp.((2.0*lambda) .* y_times) .* lhs_interp.(y_times) ./ (2.0*lambda)
+    _x = exp.((2.0*lambda) .* y_times) .* ss_interp.(y_times) 
     _z = rhs_interp.(y_times)
-    _w = exp.(-(2.0*lambda) .* y_times)
+    _w = exp.(-(2.0*lambda) .* y_times) ./ (2.0*lambda)
 
     y_values = _w.*( _x - _z)
 
@@ -38,8 +39,9 @@ function build_y(lambda::Float, times::Vector{Float}, sigma::Vector{Float}, maxT
     return y_interp
 end
 
-@enter y = build_y(0.5, vol.times, vol.sigma)
-
+y = build_y(0.5, vol.times, vol.sigma)
+println.(y.(vol.times))
+println.(0.01.*(1.0.-exp.(-vol.times)))
 #=
 po = PowerSpreadPayoff(0.035, 0.0, 0.065, 15.0, Date(2021, 1, 4), Date(2021, 3, 1), [1.0, -1.0], [Ave(), Ave()])
 
