@@ -2,58 +2,26 @@ using JsQL
 using Random
 using Dates
 using BenchmarkTools
+using LinearAlgebra
 
 ref_date = Date(2021, 1, 2)
 dates = [ref_date + Month(6*i) for i =0:2]
-sigma = [0.1, 0.1, 0.1]
+sigma = [0.02, 0.02, 0.02]
+rates = [0.01, 0.01, 0.01]
 
+yts = ZeroCurve(dates, rates)
 vol = TimeStepVolatility(ref_date, dates, sigma)
-#plot(lin, test_local.(lin))
+dtg = JsQL.Time.DateTimeGrid(ref_date, ref_date + Year(20), mandDates = dates)
+x1 = OneFactorGsrProcess(dtg, yts, 0.1, vol)
 
-"""
-This builds y(t) as a StepForwardInterpolation.
-StepForwardInterpolation is chosen for both convenience and computational efficiency.
-"""
-function build_y(lambda::Float, times::Vector{Float}, sigma::Vector{Float}, maxTime::Float=20.0, timeStep::Int=20*252)
-    times[1] ≈ 0.0 || error("The first element in times is not zero, location: build_y")
-    length(sigma) != 1 || pushfirst!(times, times[1]) || pushfirst!(sigma, sigma[1])
 
-    sigma_squared = sigma .^2.0
-    rhs_point = typeof(sigma_squared)(undef, length(sigma_squared))
-    rhs_point[1] = sigma_squared[1]
-    rhs_point[2:end] = (sigma_squared[2:end] - sigma_squared[1:end-1]) .* exp.(2.0*lambda .* times[2:end]) 
-    rhs_point = accumulate(+, rhs_point)
-    rhs_interp = JsQL.Math.StepForwardInterpolation(times, rhs_point)
+corr = Matrix{Float}(1.0I, 2, 2)
+corr[1, 2] = corr[2, 1] = 0.95
+rng = MersenneTwister(0)
 
-    ss_interp = JsQL.Math.StepForwardInterpolation(times, sigma_squared)
 
-    y_times  = times#collect(range(0.0, 2.0, length=21))
 
-    _x = exp.((2.0*lambda) .* y_times) .* ss_interp.(y_times) 
-    _z = rhs_interp.(y_times)
-    _w = exp.(-(2.0*lambda) .* y_times) ./ (2.0*lambda)
 
-    y_values = _w.*( _x - _z)
 
-    y_interp = JsQL.Math.StepForwardInterpolation(y_times, y_values)
-    return y_interp
-end
-
-y = build_y(0.5, vol.times, vol.sigma)
-println.(y.(vol.times))
-println.(0.01.*(1.0.-exp.(-vol.times)))
-#=
-po = PowerSpreadPayoff(0.035, 0.0, 0.065, 15.0, Date(2021, 1, 4), Date(2021, 3, 1), [1.0, -1.0], [Ave(), Ave()])
-
-cal= JsQL.Time.SouthKoreaSettlementCalendar()
-
-start_date = Date(2021, 1, 4)
-end_date = start_date + Year(1)
-dtg = JsQL.Time.DateTimeGrid(start_date, end_date)
-dt = Vector{Float64}(undef, length(dtg.times))
-dt[2:end] = dtg.times[2:end] - dtg.times[1:end-1]
-dt[1]=0.0
-simnum=2
-vals = randn(simnum, length(dtg.times)) .* sqrt.(dt)'
-path = Path(dtg, vals)
-=#
+PathGenerator
+#process = OneFactorGsrProcess(dtg, )

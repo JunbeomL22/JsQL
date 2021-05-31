@@ -1,41 +1,24 @@
-mutable struct PathGenerator{RSG <: AbstractRandomSequenceGenerator, S <: StochasticProcess}
+using Random
+using LinearAlgebra
+
+mutable struct PathGenerator{RSG <: AbstractRNG, S <: StochasticProcess}
     generator::RSG
     dimension::Int
-    timeNumber::Int
-    timeGrid::TimeGrid
+    timeNum::Int
+    pathNum::Int # e.g., 100,000
+    dtg::DateTimeGrid
     processes::Vector{S}
-    nextSample::Vector{Sample{Path}}
-    temp::Vector{Float64}
+    corr::Matrix{Float}
+    L::LowerTriangular{Float64, Matrix{Float64}}
+    paths::Vector{Path}
 end
 
-function PathGenerator(processes::Vector{StochasticProcess}, tg::TimeGrid, generator::AbstractRandomSequenceGenerator)
-    generator.timeNumber == length(tg.times) - 1 || error("wrong dimensions")
+function PathGenerator(processes::Vector{StochasticProcess}, dtg::DateTimeGrid, 
+                        generator::AbstractRNG, pathNum::Int = 50000, corr::Matrix{Float} = ones(FLoat,1,1) )
+    timeNum = length(dtg.times)
     dimension = length(processes)
-    return PathGenerator(generator, dimension, generator.timeNumber, tg, processes, 
-                            fill(Sample(Path(tg), 1.0), dimension), zeros(generator.dimension))
+    L = cholesky(corr).L
+    paths = [Path(dtg, dimension) for _=1:pathNum]
+    return PathGenerator(generator, dimension, timeNum, pathNUm, dtg, processes, corr, L, paths)
 end
 
-function PathGenerator(processes::Vector{StochasticProcess}, len::Float64, timeSteps::Int, generator::AbstractRandomSequenceGenerator)
-    timeNumber = generator.timeNumber
-    timeSteps == timeNumber || error("sequence generator dimensionality error")
-    dimension = length(processes)
-    tg = TimeGrid(len, timeSteps)
-  
-    return PathGenerator(generator, dimension, timeNumber, tg, process, fill(Sample(Path(tg), 1.0), dimension), zeros(dims))
-end
-  
-function get_next!(pg::PathGenerator, i::Int)
-    sequenceVals, sequenceWeight = next_sequence!(pg.generator)
-  
-    pg.nextSample.weight = sequenceWeight
-    process = pg.processes[i]
-    pg.nextSample[i].value[1] = get_x0(process)
-  
-    @inbounds @simd for i = 2:length(pg.nextSample[i].value)
-        t = pg.timeGrid[i-1]
-        dt = pg.timeGrid.dt[i - 1]
-        pg.nextSample[i].value[i] = evolve(process, t, pg.nextSample[i].value[i-1], dt, pg.temp[i-1])
-    end
-  
-    return pg.nextSample[i]
-end

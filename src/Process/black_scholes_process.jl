@@ -196,8 +196,7 @@ end
 
 function evolve(process::BlackScholes, ::Union{GeneralBlackScholesType, BlackScholesMertonType}, t::Float64, x::Float64, dt::Float64, dw::Float64)
     dividend = accumulated_dividend(process, t, t + dt)
-
     return  x + drift(process.disc, process, t, x, dt) + diffusion(process.disc, t, x, dt) * dw - dividend
-    
 end
+
 

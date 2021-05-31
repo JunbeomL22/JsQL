@@ -9,17 +9,17 @@ end
 
 struct JumpTime
   ts_quote::Quote
-  ts_time::Float64
+  ts_time::Float
 end
 
 discount(yts::NullYieldTermStructure, ::Date) = 1.0
-discount(yts::NullYieldTermStructure, ::Float64) = 1.0
+discount(yts::NullYieldTermStructure, ::Float) = 1.0
 
 discount(yts::YieldTermStructure, date::Date) = discount(yts, time_from_reference(yts, date))
 
 discount(yts::YieldTermStructure, d1::Date, d2::Date) = discount(yts, time_from_reference(yts, d2)) / discount(yts, time_from_reference(yts, d1))
 
-function discount(yts::YieldTermStructure, time_frac::Float64)
+function discount(yts::YieldTermStructure, time_frac::Float)
   disc = discount_impl(yts, time_frac)
   if isdefined(yts, :jumpTimes)
     if length(yts.jumpTimes) == 0
@@ -49,7 +49,7 @@ function zero_rate(yts::YieldTermStructure, date::Date, dc::DayCount, comp::Comp
   end
 end
 
-function zero_rate(yts::YieldTermStructure, time_frac::Float64, comp::CompoundingType = ContinuousCompounding(), freq::Frequency = Annual())
+function zero_rate(yts::YieldTermStructure, time_frac::Float, comp::CompoundingType = ContinuousCompounding(), freq::Frequency = Annual())
   t = time_frac == 0.0 ? 0.0001 : time_frac
   return implied_rate(1.0 / discount(yts, t), yts.dc, comp, t, freq)
 end
@@ -68,7 +68,7 @@ end
 
 forward_rate(yts::YieldTermStructure, date::Date, period::Integer, dc::DayCount, comp::CompoundingType = SimpleCompounding(), freq::Frequency = Annual()) = forward_rate(yts, date, date + Dates.Day(period), dc, comp, freq)
 
-function forward_rate(yts::YieldTermStructure, time1::Float64, time2::Float64, comp::CompoundingType = SimpleCompounding(), freq::Frequency = Annual())
+function forward_rate(yts::YieldTermStructure, time1::Float, time2::Float, comp::CompoundingType = SimpleCompounding(), freq::Frequency = Annual())
   if time1 == time2
     t1 = max(time1 - 0.0001 / 2.0, 0.0)
     t2 = t1 + 0.0001
@@ -81,7 +81,7 @@ function forward_rate(yts::YieldTermStructure, time1::Float64, time2::Float64, c
 end
 
 forward_rate(::NullYieldTermStructure, ::Date, ::Integer, ::DayCount, ::CompoundingType, ::Frequency = Annual()) = implied_rate(1.0, Act365(), SimpleCompounding(), 1.0e-2, JsQL.Time.NoFrequency())
-forward_rate(::NullYieldTermStructure, ::Float64, ::Float64, ::CompoundingType, ::Frequency = Annual()) = implied_rate(1.0, Act365(), SimpleCompounding(), 1.0e-2, JsQL.Time.NoFrequency())
+forward_rate(::NullYieldTermStructure, ::Float, ::Float, ::CompoundingType, ::Frequency = Annual()) = implied_rate(1.0, Act365(), SimpleCompounding(), 1.0e-2, JsQL.Time.NoFrequency())
 
 mutable struct FlatForwardTermStructure{B <: BusinessCalendar, DC <: DayCount, C <: CompoundingType, F <: Frequency} <: YieldTermStructure
   settlementDays::Int
@@ -110,12 +110,12 @@ FlatForwardTermStructure(referenceDate::Date, calendar::BusinessCalendar, forwar
 FlatForwardTermStructure(settlementDays::Int, calendar::BusinessCalendar, forward::Quote, dc::DayCount, comp::CompoundingType = ContinuousCompounding(), freq::Frequency = QuantLib.Time.Annual()) =
                         FlatForwardTermStructure(settlementDays, Date(0), calendar, forward, dc, comp, freq)
 
-FlatForwardTermStructure(referenceDate::Date, forward::Float64, dc::DayCount) =
+FlatForwardTermStructure(referenceDate::Date, forward::Float, dc::DayCount) =
                         FlatForwardTermStructure(0, referenceDate, JsQL.Time.TargetCalendar(), Quote(forward), dc, ContinuousCompounding(), Annual())
 
-FlatForwardTermStructure(referenceDate::Date, forward::Float64, dc::DayCount, compounding::CompoundingType, freq::Frequency) =
+FlatForwardTermStructure(referenceDate::Date, forward::Float, dc::DayCount, compounding::CompoundingType, freq::Frequency) =
                         FlatForwardTermStructure(0, referenceDate, JsQL.Time.TargetCalendar(), Quote(forward), dc, compounding, freq)
 
-discount_impl(ffts::FlatForwardTermStructure, time_frac::Float64) = discount_factor(ffts.rate, time_frac)
+discount_impl(ffts::FlatForwardTermStructure, time_frac::Float) = discount_factor(ffts.rate, time_frac)
 
 # discount_impl(ffts::FlatForwardTermStructure, time_frac::Float64) = discount_factor(ffts.rate, time_frac)
