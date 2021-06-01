@@ -14,7 +14,6 @@ vol = TimeStepVolatility(ref_date, dates, sigma)
 dtg = JsQL.Time.DateTimeGrid(ref_date, ref_date + Year(20), mandDates = dates)
 x1 = OneFactorGsrProcess(dtg, yts, 0.1, vol)
 
-
 corr = Matrix{Float}(1.0I, 2, 2)
 corr[1, 2] = corr[2, 1] = 0.95
 rng = MersenneTwister(0)

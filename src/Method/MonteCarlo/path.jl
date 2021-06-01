@@ -1,6 +1,6 @@
 import Base.getindex, Base.setindex!, Base.length, Base.lastindex, Base.copy
 
-struct Path
+mutable struct Path
     dtg::DateTimeGrid
     values::Matrix{Float}
 end

@@ -56,6 +56,7 @@ abstract type LsmBasisSystemFunction <: Function end
 # Process
 abstract type StochasticProcess end
 abstract type StochasticProcess1D <: StochasticProcess end
+abstract type StochasticProcess2D <: StochasticProcess end
 abstract type AbstractBlackScholesProcess <: StochasticProcess1D end
 abstract type BlackScholesType end
 abstract type AbstractDiscretization end

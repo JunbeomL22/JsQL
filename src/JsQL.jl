@@ -13,7 +13,7 @@ export bp, ε, Float
 
 export # abstract_type.jl
 LazyObject, Instrument, Swap, SwapType, Bond, Results, AbstractPayoff,
-PositionType, AbstractCurrency, 
+PositionType, AbstractCurrency, StochasticProcess, StochasticProcess1D, StochasticProcess2D,
 #
 CompoundingType, TermStructure, YieldTermStructure, CreditTermStructure, ConvenienceTermStructure,
 VolatilityTermStructure, OptionletVolatilityStructure, SwaptionVolatilityStructure,
@@ -33,7 +33,7 @@ AbstractRandomSequenceGenerator
 export #Process
 AbstractBlackScholesProcess, EulerDiscretization, BalckScholes, drift, diffusion, 
 state_variable, black_variance, forward_price, BsmDiscreteDiv, accumulated_dividend, dividend_deduction,
-QuantoCorrelation, OneFactorGsrProcess
+QuantoCorrelation, OneFactorGsrProcess, get_init
 
 export # lazy.jl
 LazyMixin
@@ -111,7 +111,7 @@ export
 Path
 
 export 
-PathGenerator
+PathGenerator, set_init!, set_brownianmotion!
 
 function value(::JsQL.Math.CostFunction, x::Vector{Float64})
     return 0.0

@@ -17,6 +17,17 @@ struct OneFactorGsrProcess{Y <: YieldTermStructure, P1 <: Interpolation,
     y::P2
 end
 
+struct TwoFactorGsrProcess{Y <: YieldTermStructure, P1 <: Interpolation, 
+    P2 <: Interpolation, V <: Volatility} <: StochasticProcess2D
+    x0::Float # == 0
+    refDate::Date
+    dtg::JsQL.Time.DateTimeGrid
+    riskFreeRate::Y
+    lambda::Float
+    volatitliy::V
+    y::P2
+end
+
 function OneFactorGsrProcess(dtg::JsQL.Time.DateTimeGrid, riskFreeRate::Y,
                             lambda::Float, volatility::TimeStepVolatility) where {Y <: YieldTermStructure}
     refDate = dtg.refDate
