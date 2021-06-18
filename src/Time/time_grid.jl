@@ -49,6 +49,7 @@ function DateTimeGrid(refDate::Date, maturity::Date;
     end
     return DateTimeGrid(refDate, dates, times, dt, mandDates, mandTimes)
 end
+
 """
 TimeGrid(times::Vector{Float64}, steps::Int) \n
 v = [1.0, 3.0, 10.]; steps = 5 \n
